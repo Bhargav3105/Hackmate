@@ -1,7 +1,10 @@
 import streamlit as st
 from dotenv import load_dotenv
 import os
-from supabase import create_client
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.auth import check_session, sign_out
 
 load_dotenv()
 
@@ -11,10 +14,17 @@ st.set_page_config(
     layout="centered"
 )
 
-supabase = create_client(
-    os.getenv("SUPABASE_URL"),
-    os.getenv("SUPABASE_KEY")
-)
+# ── SESSION CHECK ─────────────────────────────────────
+check_session()
+
+if "user" not in st.session_state or not st.session_state.user:
+    st.switch_page("pages/2_login.py")
+
+# Skip if profile already complete
+if st.session_state.get("profile"):
+    profile = st.session_state.profile
+    if profile.get("full_name"):
+        st.switch_page("pages/6_dashboard.py")
 
 # ── STYLING ──────────────────────────────────────────
 st.markdown("""
@@ -35,7 +45,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-
 # ── HEADER ───────────────────────────────────────────
 st.markdown("""
     <div style='text-align:center; margin-bottom:1.5rem;'>
@@ -50,7 +59,6 @@ st.markdown("""
         </div>
     </div>
 """, unsafe_allow_html=True)
-
 
 # ── SECTION 1: BASIC INFO ─────────────────────────────
 st.markdown("### Basic Info")
@@ -74,7 +82,6 @@ bio = st.text_area(
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-
 # ── SECTION 2: SKILLS ─────────────────────────────────
 st.markdown("### Skills")
 st.markdown(
@@ -89,7 +96,6 @@ all_skills = [
     "Django", "FastAPI", "Next.js", "SQL"
 ]
 
-# Show skills as checkboxes in 3 columns
 selected_skills = []
 cols = st.columns(3)
 for i, skill in enumerate(all_skills):
@@ -98,7 +104,6 @@ for i, skill in enumerate(all_skills):
             selected_skills.append(skill)
 
 st.markdown("<br>", unsafe_allow_html=True)
-
 
 # ── SECTION 3: EXPERIENCE ─────────────────────────────
 st.markdown("### Experience Level")
@@ -111,7 +116,6 @@ experience = st.radio(
 )
 
 st.markdown("<br>", unsafe_allow_html=True)
-
 
 # ── SECTION 4: AVAILABILITY ───────────────────────────
 st.markdown("### Daily Availability")
@@ -128,7 +132,6 @@ st.markdown(
 )
 
 st.markdown("<br>", unsafe_allow_html=True)
-
 
 # ── SECTION 5: GOALS ──────────────────────────────────
 st.markdown("### Buildathon Goals")
@@ -155,11 +158,9 @@ for i, goal in enumerate(all_goals):
 
 st.markdown("<br><br>", unsafe_allow_html=True)
 
-
 # ── SAVE BUTTON ───────────────────────────────────────
 if st.button("Save Profile and Continue"):
 
-    # Basic validation
     if not full_name:
         st.error("Please enter your full name.")
 
@@ -171,7 +172,6 @@ if st.button("Save Profile and Continue"):
 
     else:
         try:
-            # Save to Supabase profiles table
             profile_data = {
                 "full_name": full_name,
                 "github_url": github_url,
@@ -182,8 +182,21 @@ if st.button("Save Profile and Continue"):
                 "goals": selected_goals,
             }
 
-            # For now store in session so we can use it
+            # Save to session immediately
             st.session_state.profile = profile_data
+
+            # Get access token
+            access_token = st.session_state.get("access_token")
+            user_id = st.session_state.user.id
+
+            # Save to Supabase
+            from utils.supabase_client import save_profile
+            result = save_profile(
+                user_id,
+                profile_data,
+                access_token
+            )
+            print(f"Save result: {result}")
 
             st.success("Profile saved! Taking you to your dashboard...")
             st.balloons()

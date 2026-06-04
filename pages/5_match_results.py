@@ -82,8 +82,12 @@ st.markdown("""
 
 
 # ── AUTH CHECK ────────────────────────────────────────
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.auth import check_session
+
+check_session()
 if "user" not in st.session_state or not st.session_state.user:
-    st.warning("Please log in first.")
     st.switch_page("pages/2_login.py")
 
 

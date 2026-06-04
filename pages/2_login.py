@@ -100,14 +100,30 @@ with tab1:
                 })
 
                 # Save user to session
+                # Store user and token in session
                 st.session_state.user = response.user
                 st.session_state.session = response.session
+                st.session_state.access_token = \
+                    response.session.access_token
 
-                st.success("Signed in! Taking you to your profile...")
+                # Try loading existing profile
+                from utils.auth import load_profile_from_db
+                profile = load_profile_from_db(
+                    response.user.id,
+                    response.session.access_token
+                )
 
                 import time
-                time.sleep(1)
-                st.switch_page("pages/3_profile_setup.py")
+
+                if profile and profile.get("full_name"):
+                    st.session_state.profile = profile
+                    st.success("Welcome back! Taking you to dashboard...")
+                    time.sleep(1)
+                    st.switch_page("pages/6_dashboard.py")
+                else:
+                    st.success("Signed in! Let's set up your profile...")
+                    time.sleep(1)
+                    st.switch_page("pages/3_profile_setup.py")
 
             except Exception as e:
                 st.error("Invalid email or password. Please try again.")

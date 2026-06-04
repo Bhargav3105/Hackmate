@@ -74,8 +74,12 @@ st.markdown("""
 
 # ── AUTH CHECK ────────────────────────────────────────
 # If not logged in send to login page
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils.auth import check_session
+
+check_session()
 if "user" not in st.session_state or not st.session_state.user:
-    st.warning("Please log in first.")
     st.switch_page("pages/2_login.py")
 
 
@@ -99,7 +103,8 @@ with col1:
 
 with col3:
     if st.button("Sign Out"):
-        st.session_state.clear()
+        from utils.auth import sign_out
+        sign_out()
         st.switch_page("pages/2_login.py")
 
 
