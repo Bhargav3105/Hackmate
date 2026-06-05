@@ -65,6 +65,17 @@ check_session()
 if "user" not in st.session_state or not st.session_state.user:
     st.switch_page("pages/2_login.py")
 
+from utils.supabase_client import parse_list_field
+
+user_profile = st.session_state.get("profile", {})
+if user_profile:
+    user_profile["skills"] = parse_list_field(
+        user_profile.get("skills", [])
+    )
+    user_profile["goals"] = parse_list_field(
+        user_profile.get("goals", [])
+    )
+
 # ── SAMPLE PROFILES ───────────────────────────────────
 sample_profiles = [
     {

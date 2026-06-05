@@ -85,3 +85,26 @@ def get_all_profiles(exclude_user_id=None):
     except Exception as e:
         print(f"Error getting profiles: {e}")
         return []
+
+def parse_list_field(value):
+    """
+    Safely parses a field that should be a list.
+    Handles strings, JSON strings, and actual lists.
+    """
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str):
+        import json
+        # Try JSON parse first
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, list):
+                return parsed
+        except Exception:
+            pass
+        # If it looks like a plain string, wrap it
+        if value.strip():
+            return [value]
+    return []

@@ -24,6 +24,11 @@ if "user" not in st.session_state or not st.session_state.user:
 if st.session_state.get("profile"):
     profile = st.session_state.profile
     if profile.get("full_name"):
+        # Fix list fields before redirecting
+        from utils.supabase_client import parse_list_field
+        profile["skills"] = parse_list_field(profile.get("skills", []))
+        profile["goals"] = parse_list_field(profile.get("goals", []))
+        st.session_state.profile = profile
         st.switch_page("pages/6_dashboard.py")
 
 # ── STYLING ──────────────────────────────────────────

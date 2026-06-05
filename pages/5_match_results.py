@@ -152,15 +152,35 @@ with col2:
         "Have fun and experiment"
     ]
 
-    selected_goals = st.multiselect(
-        "Team Goals",
-        options=all_goals,
-        default=st.session_state.get(
-            "profile", {}
-        ).get("goals", [])
-    )
+    from utils.supabase_client import parse_list_field
 
-    team_size = st.slider(
+    saved_profile = st.session_state.get("profile", {})
+
+    safe_skills = [
+        s for s in parse_list_field(saved_profile.get("skills", []))
+        if s in all_skills
+    ]
+
+safe_goals = [
+    g for g in parse_list_field(saved_profile.get("goals", []))
+    if g in all_goals
+]
+
+# Handle if goals saved as string accidentally
+if isinstance(saved_goals_raw, str):
+    import json
+    try:
+        saved_goals_raw = json.loads(saved_goals_raw)
+    except Exception:
+        saved_goals_raw = []
+
+# Only keep goals that exist in the options list
+valid_goal_defaults = [
+    g for g in saved_goals_raw
+    if g in all_goals
+]
+
+team_size = st.slider(
         "Team Size",
         min_value=1,
         max_value=6,

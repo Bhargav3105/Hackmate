@@ -89,11 +89,12 @@ user = st.session_state.get("user", {})
 
 # Fallback name if profile not set
 name = profile.get("full_name", "Builder")
-skills = profile.get("skills", [])
+from utils.supabase_client import parse_list_field
+
+skills = parse_list_field(profile.get("skills", []))
 experience = profile.get("experience_level", "Intermediate")
 availability = profile.get("availability", "3-5 hrs")
-goals = profile.get("goals", [])
-
+goals = parse_list_field(profile.get("goals", []))
 
 # ── NAVBAR ────────────────────────────────────────────
 col1, col2, col3 = st.columns([1, 3, 1])
