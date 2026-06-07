@@ -77,33 +77,34 @@ with tab1:
         if not email or not password:
             st.error("Please enter your email and password.")
         else:
-            try:
-                response = supabase.auth.sign_in_with_password({
-                    "email": email,
-                    "password": password
-                })
+            with st.spinner("Signing you in..."):
+                try:
+                    response = supabase.auth.sign_in_with_password({
+                        "email": email,
+                        "password": password
+                    })
 
-                st.session_state.user = response.user
-                st.session_state.session = response.session
-                st.session_state.access_token = \
-                    response.session.access_token
+                    st.session_state.user = response.user
+                    st.session_state.session = response.session
+                    st.session_state.access_token = \
+                        response.session.access_token
 
-                from utils.auth import load_profile_from_db
-                profile = load_profile_from_db(response.user.id)
+                    from utils.auth import load_profile_from_db
+                    profile = load_profile_from_db(response.user.id)
 
-                import time
-                if profile and profile.get("full_name"):
-                    st.session_state.profile = profile
-                    st.success("Welcome back.")
-                    time.sleep(0.8)
-                    st.switch_page("pages/6_dashboard.py")
-                else:
-                    st.success("Signed in.")
-                    time.sleep(0.8)
-                    st.switch_page("pages/3_profile_setup.py")
+                    import time
+                    if profile and profile.get("full_name"):
+                        st.session_state.profile = profile
+                        st.success("Welcome back.")
+                        time.sleep(0.8)
+                        st.switch_page("pages/6_dashboard.py")
+                    else:
+                        st.success("Signed in.")
+                        time.sleep(0.8)
+                        st.switch_page("pages/3_profile_setup.py")
 
-            except Exception:
-                st.error("Incorrect email or password.")
+                except Exception:
+                    st.error("Incorrect email or password.")
 
 with tab2:
     st.markdown(

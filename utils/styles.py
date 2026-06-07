@@ -528,4 +528,58 @@ def load_css():
         margin: 2.5rem 0 !important;
     }
     </style>
+
+    /* ── LOADING STATES ─────────────────────── */
+    @keyframes shimmer {
+        0%   { background-position: -400px 0; }
+        100% { background-position: 400px 0; }
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0.4; }
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .hm-skeleton {
+        background: linear-gradient(
+            90deg,
+            #1c1c1f 25%,
+            #27272a 50%,
+            #1c1c1f 75%
+        );
+        background-size: 400px 100%;
+        animation: shimmer 1.4s ease infinite;
+        border-radius: 8px;
+    }
+
+    .hm-spinner {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #27272a;
+        border-top-color: #d4d4d8;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        display: inline-block;
+    }
+
+    .hm-loading-text {
+        animation: pulse 1.5s ease infinite;
+        color: #52525b;
+        font-size: 0.82rem;
+        font-weight: 300;
+        letter-spacing: 0.04em;
+    }
+
+    .hm-page-enter {
+        animation: fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
+    }
     """
