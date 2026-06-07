@@ -44,25 +44,6 @@ Coming soon — deployment in progress
 
 ---
 
-## Screenshots
-
-### Landing Page
-A clean, premium dark interface that immediately communicates the product value.
-
-### Dashboard
-Personalized AI match recommendations with compatibility scores and quick actions.
-
-### AI Teammate Matching
-Real-time compatibility scoring with strengths, role suggestions and match reasoning.
-
-### Project Idea Generator
-Three detailed AI-generated buildathon ideas with full feature lists and 3-day timelines.
-
-### Team Workspace
-Collaborative task board with assignees, team chat and real-time progress tracking.
-
----
-
 ## Features
 
 ### Core MVP Features
@@ -115,35 +96,6 @@ Language          Python 3.11
 - **Supabase** — Postgres database with built-in auth, row level security and a generous free tier.
 - **Groq** — Fastest LLM inference available. Free tier. Llama 3.3 70B gives GPT-4 quality responses.
 - **Streamlit Cloud** — One-click deployment directly from GitHub. Free hosting for public repos.
-
----
-
-## Project Structure
-hackmate/
-│
-├── app.py                        # Landing page — hero, features, CTA
-│
-├── pages/
-│   ├── 2_login.py                # Email authentication — sign in and sign up
-│   ├── 3_profile_setup.py        # User profile creation and editing
-│   ├── 4_find_teammates.py       # Browse real users, check AI compatibility
-│   ├── 5_match_results.py        # AI project idea generator
-│   ├── 6_dashboard.py            # Main dashboard — matches, team, actions
-│   └── 7_team_workspace.py       # Team tasks, chat and progress tracking
-│
-├── utils/
-│   ├── ai_helper.py              # All Groq AI calls — matching, ideas, tips
-│   ├── auth.py                   # Session management and profile loading
-│   ├── styles.py                 # Global CSS design system
-│   └── supabase_client.py        # All database operations — CRUD, requests
-│
-├── .streamlit/
-│   └── config.toml               # Streamlit theme and server config
-│
-├── .env                          # Secret keys — never committed to GitHub
-├── .gitignore                    # Protects secrets and venv
-├── requirements.txt              # All Python dependencies
-└── README.md                     # This file
 
 ---
 
@@ -264,7 +216,6 @@ create table profiles (
     created_at timestamp default now()
 );
 
--- Enable RLS
 alter table profiles enable row level security;
 create policy "Authenticated users can read profiles"
     on profiles for select to authenticated using (true);
@@ -333,7 +284,7 @@ Streamlit reruns the entire script on every interaction. Storing the access toke
 Row Level Security in Supabase requires the user's JWT token to be passed with every request. Since Streamlit's Python backend doesn't maintain a persistent connection, using the service role key for server-side writes is safer and more reliable for this architecture.
 
 **Why Groq instead of OpenAI?**
-Groq is free, extremely fast (10x faster than OpenAI), and Llama 3.3 70B produces output quality comparable to GPT-4. For a buildathon MVP this is the right choice — zero cost and no latency issues.
+Groq is free, extremely fast, and Llama 3.3 70B produces output quality comparable to GPT-4. For a buildathon MVP this is the right choice — zero cost and no latency issues.
 
 **Why JSON responses from AI?**
 Structured JSON output makes it easy to display AI responses in a clean UI. The `clean_json()` helper strips markdown formatting that LLMs sometimes add, making parsing robust even with imperfect model output.
@@ -365,22 +316,90 @@ Structured JSON output makes it easy to display AI responses in a clean UI. The 
 
 ## Development Journey
 
-This project was built during the Sarvam AI Buildathon 2025 over approximately 2 weeks as a solo developer project. The development progressed through these phases:
+This project was built during the Sarvam AI Buildathon 2025 over approximately 2 weeks. The development progressed through these phases:
 
 | Phase | What was built |
 |---|---|
 | Week 1 | Environment setup, GitHub, Supabase, landing page, auth |
-| Week 2 | Profile setup, dashboard, AI matching, compatibility |
+| Week 2 | Profile setup, dashboard, AI matching, compatibility scoring |
 | Week 3 | Project idea generator, team workspace, connection requests |
 | Week 4 | UI polish, session persistence, bug fixes, deployment |
 
 ---
 
-## Author
+## Team
 
-**Bhargav Bathla**
+This project was designed, architected and built by a team of four developers.
 
-Built from scratch during the Sarvam AI Buildathon 2025.
+<br>
+
+### Bhargav Bathla — Project Lead & Full Stack Developer
+
+> Responsible for overall product vision, architecture decisions, full stack development and project delivery.
+
+**Role:** Product Lead · Full Stack Engineer · AI Integration
+
+**Skills used in this project:**
+- Product architecture and feature prioritization
+- Streamlit frontend development and UI design system
+- Python backend logic and page routing
+- Supabase database schema design and RLS policies
+- Groq AI API integration and prompt engineering
+- Session management and authentication flow
+- Git workflow and project management
+- Deployment and DevOps
+
+---
+
+### Aishwary Raghuwansi — AI & Backend Engineer
+
+> Responsible for AI model integration, prompt design and backend data pipeline.
+
+**Role:** AI Engineer · Backend Developer
+
+**Skills used in this project:**
+- Groq API and LLM integration
+- Prompt engineering for structured JSON output
+- AI compatibility scoring algorithm design
+- Python backend functions and utility modules
+- Database query optimization
+- JSON parsing and error handling for AI responses
+- Testing AI output quality and consistency
+
+---
+
+### Rajat Kumar Singh — Database & Auth Engineer
+
+> Responsible for database architecture, authentication system and data security.
+
+**Role:** Database Engineer · Security & Auth Specialist
+
+**Skills used in this project:**
+- Supabase PostgreSQL schema design
+- Row Level Security policy configuration
+- User authentication flow with Supabase Auth
+- Team connection and request table design
+- Data persistence and session management
+- Service role key management and secure database writes
+- SQL query writing and optimization
+
+---
+
+### Tejas Baghel — UI/UX Designer & Frontend Developer
+
+> Responsible for visual design, user experience and frontend implementation.
+
+**Role:** UI/UX Designer · Frontend Developer
+
+**Skills used in this project:**
+- Premium dark UI design system inspired by modern startups
+- CSS animations and smooth scroll reveal effects
+- Component design — cards, badges, match cards, task board
+- Typography hierarchy with Playfair Display and Inter fonts
+- Color system and spacing design tokens
+- Responsive layout using Streamlit columns
+- User flow design across all seven pages
+- Design consistency and visual polish
 
 ---
 
