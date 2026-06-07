@@ -138,7 +138,6 @@ with n3:
             "No requests</div>",
             unsafe_allow_html=True
         )
-
 with n4:
     if st.button("Sign Out"):
         sign_out()
