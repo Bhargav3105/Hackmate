@@ -245,3 +245,30 @@ with col2:
         use_container_width=True
     ):
         st.switch_page("pages/6_dashboard.py")
+
+# ── SHARE PROFILE ─────────────────────────────────────
+st.markdown("<hr>", unsafe_allow_html=True)
+st.markdown(
+    "<div class='hm-label'>Share Your Profile</div>",
+    unsafe_allow_html=True
+)
+
+profile_id = user.id if user else ""
+share_url = f"https://hackmate.streamlit.app/?profile={profile_id}"
+
+st.markdown(
+    f"<div style='background:#111113;"
+    f"border:1px solid #1c1c1f;"
+    f"border-radius:12px;padding:1.2rem;"
+    f"margin-bottom:1rem;'>"
+    f"<div style='font-size:0.75rem;color:#52525b;"
+    f"margin-bottom:0.5rem;font-weight:300;'>"
+    f"Your profile link</div>"
+    f"<div style='font-size:0.82rem;color:#a1a1aa;"
+    f"font-family:monospace;word-break:break-all;'>"
+    f"{share_url}</div>"
+    f"</div>",
+    unsafe_allow_html=True
+)
+
+st.code(share_url, language=None)
