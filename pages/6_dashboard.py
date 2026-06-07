@@ -97,14 +97,50 @@ availability = profile.get("availability", "3-5 hrs")
 goals = parse_list_field(profile.get("goals", []))
 
 # ── NAVBAR ────────────────────────────────────────────
-col1, col2, col3 = st.columns([1, 3, 1])
+from utils.supabase_client import get_my_requests
 
-with col1:
-    st.markdown("### HackMate")
+n1, n2, n3, n4 = st.columns([1, 3, 1, 1])
+with n1:
+    st.markdown(
+        "<div class='hm-logo'>HackMate</div>",
+        unsafe_allow_html=True
+    )
 
-with col3:
+# Get pending requests count
+pending = []
+if user:
+    pending = get_my_requests(user.id)
+notif_count = len(pending)
+
+with n3:
+    # Show notification badge
+    if notif_count > 0:
+        st.markdown(
+            f"<div style='display:flex;align-items:center;"
+            f"gap:8px;padding-top:0.3rem;'>"
+            f"<div style='position:relative;display:inline-block;'>"
+            f"<span style='font-size:0.82rem;color:#71717a;'>"
+            f"Requests</span>"
+            f"<span style='position:absolute;top:-6px;right:-14px;"
+            f"background:#ef4444;color:white;"
+            f"font-size:0.6rem;font-weight:600;"
+            f"width:16px;height:16px;border-radius:50%;"
+            f"display:flex;align-items:center;"
+            f"justify-content:center;'>"
+            f"{notif_count}</span>"
+            f"</div></div>",
+            unsafe_allow_html=True
+        )
+    else:
+        st.markdown(
+            "<div style='padding-top:0.3rem;"
+            "font-size:0.82rem;color:#3f3f46;'>"
+            "No requests</div>",
+            unsafe_allow_html=True
+        )
+
+with n4:
     if st.button("Sign Out"):
-        from utils.auth import sign_out
         sign_out()
         st.switch_page("pages/2_login.py")
 
