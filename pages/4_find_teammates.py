@@ -165,26 +165,43 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-fc1, fc2 = st.columns(2)
-with fc1:
+sc1, sc2, sc3 = st.columns(3)
+
+with sc1:
+    search_name = st.text_input(
+        "Search by name",
+        placeholder="e.g. Arjun",
+        label_visibility="collapsed"
+    )
+
+with sc2:
     filter_exp = st.multiselect(
         "Experience Level",
         options=["Beginner", "Intermediate", "Advanced"]
     )
-with fc2:
+
+with sc3:
     filter_avail = st.multiselect(
         "Availability",
         options=["1-2 hrs", "3-5 hrs", "6-8 hrs", "Full time"]
     )
 
-# Apply filters
-# Apply filters
+# Apply all filters
 filtered = all_profiles
+
+if search_name:
+    filtered = [
+        p for p in filtered
+        if search_name.lower() in
+        p.get("full_name", "").lower()
+    ]
+
 if filter_exp:
     filtered = [
         p for p in filtered
         if p["experience_level"] in filter_exp
     ]
+
 if filter_avail:
     filtered = [
         p for p in filtered
