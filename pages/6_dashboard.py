@@ -175,6 +175,106 @@ with s4:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
+# ── SENT REQUESTS ─────────────────────────────────────
+sent = st.session_state.get("sent_requests", [])
+if sent:
+    st.markdown(
+        "<div class='hm-label'>Sent Requests</div>",
+        unsafe_allow_html=True
+    )
+    for req in sent:
+        status_color = (
+            "#34d399" if req["status"] == "accepted"
+            else "#f87171" if req["status"] == "declined"
+            else "#71717a"
+        )
+        st.markdown(
+            f"<div style='background:#111113;"
+            f"border:1px solid #1c1c1f;"
+            f"border-radius:12px;padding:1rem 1.2rem;"
+            f"margin-bottom:0.5rem;"
+            f"display:flex;justify-content:space-between;"
+            f"align-items:center;'>"
+            f"<div style='font-size:0.85rem;color:#a1a1aa;'>"
+            f"Request to <span style='color:#f4f4f5;"
+            f"font-family:Playfair Display,serif;'>"
+            f"{req['to']}</span></div>"
+            f"<span style='font-size:0.7rem;font-weight:500;"
+            f"letter-spacing:0.08em;text-transform:uppercase;"
+            f"color:{status_color};'>{req['status']}</span>"
+            f"</div>",
+            unsafe_allow_html=True
+        )
+    st.markdown("<hr>", unsafe_allow_html=True)
+
+# ── INCOMING REQUESTS ─────────────────────────────────
+from utils.supabase_client import get_my_requests, update_request_status
+
+user = st.session_state.get("user")
+if user:
+    requests = get_my_requests(user.id)
+    if requests:
+        st.markdown(
+            "<div class='hm-label' style='margin-bottom:0.8rem;'>"
+            "Connection Requests</div>",
+            unsafe_allow_html=True
+        )
+        for req in requests:
+            rc1, rc2, rc3 = st.columns([3, 1, 1])
+            with rc1:
+                st.markdown(
+                    f"<div style='background:#111113;"
+                    f"border:1px solid #1c1c1f;"
+                    f"border-radius:12px;padding:1rem 1.2rem;'>"
+                    f"<div style='font-family:Playfair Display,serif;"
+                    f"font-size:0.95rem;color:#f4f4f5;"
+                    f"margin-bottom:0.3rem;'>"
+                    f"{req.get('from_name', 'Someone')} "
+                    f"wants to team up</div>"
+                    f"<div style='font-size:0.8rem;color:#71717a;"
+                    f"font-style:italic;font-weight:300;'>"
+                    f"{req.get('message', 'No message')}</div>"
+                    f"</div>",
+                    unsafe_allow_html=True
+                )
+            with rc2:
+                if st.button(
+                    "Accept",
+                    key=f"accept_{req['id']}",
+                    use_container_width=True
+                ):
+                    update_request_status(req["id"], "accepted")
+
+                    # Create team connection
+                    from utils.supabase_client import (
+                        create_team_connection
+                    )
+                    my_name = profile.get(
+                        "full_name", "User"
+                    )
+                    create_team_connection(
+                        user1_id=user.id,
+                        user2_id=req["from_user_id"],
+                        user1_name=my_name,
+                        user2_name=req.get("from_name", "User")
+                    )
+                    st.success(
+                        f"Connected with "
+                        f"{req.get('from_name')}! "
+                        f"Check Team Workspace."
+                    )
+                    st.rerun()
+            with rc3:
+                if st.button(
+                    "Decline",
+                    key=f"decline_{req['id']}",
+                    use_container_width=True
+                ):
+                    update_request_status(req["id"], "declined")
+                    st.info("Request declined.")
+                    st.rerun()
+
+        st.markdown("<hr>", unsafe_allow_html=True)
 
 # ── MAIN CONTENT ──────────────────────────────────────
 left, right = st.columns([2, 1])
@@ -270,6 +370,67 @@ with right:
     st.markdown("### Your Profile")
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # ── TEAM MEMBERS PREVIEW ──────────────────────────
+    from utils.supabase_client import get_team_members
+
+    team_members = get_team_members(user.id)
+
+    st.markdown(
+        "<div class='hm-label'>Your Team</div>",
+        unsafe_allow_html=True
+    )
+
+    if team_members:
+        for member in team_members:
+            initial = member["name"][0].upper()
+            st.markdown(
+                f"<div style='background:#111113;"
+                f"border:1px solid #1c1c1f;"
+                f"border-radius:12px;padding:1rem 1.2rem;"
+                f"margin-bottom:0.5rem;"
+                f"display:flex;align-items:center;gap:1rem;'>"
+                f"<div style='width:36px;height:36px;"
+                f"border-radius:8px;background:#18181b;"
+                f"border:1px solid #27272a;"
+                f"display:flex;align-items:center;"
+                f"justify-content:center;"
+                f"font-family:Playfair Display,serif;"
+                f"color:#a1a1aa;font-size:0.9rem;'>"
+                f"{initial}</div>"
+                f"<div>"
+                f"<div style='font-family:Playfair Display,serif;"
+                f"font-size:0.9rem;color:#f4f4f5;'>"
+                f"{member['name']}</div>"
+                f"<div style='font-size:0.7rem;color:#52525b;"
+                f"letter-spacing:0.04em;'>Team member</div>"
+                f"</div></div>",
+                unsafe_allow_html=True
+            )
+
+        if st.button(
+            "Open Team Workspace",
+            use_container_width=True
+        ):
+            st.switch_page("pages/7_team_workspace.py")
+
+    else:
+        st.markdown(
+            "<div style='background:#111113;"
+            "border:1px solid #1c1c1f;"
+            "border-radius:12px;padding:1.2rem;"
+            "font-size:0.82rem;color:#52525b;"
+            "font-style:italic;font-weight:300;'>"
+            "No team members yet. Find teammates and "
+            "send connection requests to build your team."
+            "</div>",
+            unsafe_allow_html=True
+        )
+
+    st.markdown(
+        "<div style='height:1.5rem'></div>",
+        unsafe_allow_html=True
+    )
+    
     st.markdown(f"""
         <div style='background:#13131a; border:1px solid #1f1f2e;
              border-radius:12px; padding:1.2rem;'>
@@ -292,17 +453,23 @@ with right:
     st.markdown("### Quick Actions")
     st.markdown("<br>", unsafe_allow_html=True)
 
-    if st.button("Find Teammates"):
+    if st.button("Find Teammates", use_container_width=True):
         st.switch_page("pages/4_find_teammates.py")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    if st.button("Generate Project Idea"):
+    if st.button("Generate Project Idea", use_container_width=True):
         st.switch_page("pages/5_match_results.py")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    if st.button("Update My Profile"):
+    if st.button("Team Workspace", use_container_width=True):
+        st.switch_page("pages/7_team_workspace.py")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    if st.button("Update Profile", use_container_width=True):
+        st.session_state.pop("profile", None)
         st.switch_page("pages/3_profile_setup.py")
 
     st.markdown("<br><br>", unsafe_allow_html=True)

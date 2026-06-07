@@ -1,213 +1,151 @@
 import streamlit as st
 from dotenv import load_dotenv
-import os
-import sys
+import os, sys
 
-# Add parent folder to path so we can import utils
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.ai_helper import generate_project_ideas, get_ai_recommendations
+from utils.ai_helper import generate_project_ideas
+from utils.auth import check_session
+from utils.supabase_client import parse_list_field
+from utils.styles import load_css
 
 load_dotenv()
 
 st.set_page_config(
     page_title="AI Ideas — HackMate",
-    page_icon="",
+    page_icon="H",
     layout="wide"
 )
 
-# ── STYLING ──────────────────────────────────────────
-st.markdown("""
-    <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    .stApp { background-color: #0a0a0f; color: #ffffff; }
+st.markdown(load_css(), unsafe_allow_html=True)
 
-    .idea-card {
-        background: #13131a;
-        border: 1px solid #1f1f2e;
-        border-radius: 14px;
-        padding: 1.5rem;
-        margin-bottom: 1.2rem;
-        transition: border-color 0.2s;
-    }
-    .idea-card:hover { border-color: #6366f1; }
-
-    .difficulty-badge {
-        padding: 3px 12px;
-        border-radius: 999px;
-        font-size: 0.78rem;
-        font-weight: 500;
-    }
-    .easy { background: #064e3b; color: #6ee7b7; }
-    .medium { background: #1e1b4b; color: #a78bfa; }
-    .hard { background: #450a0a; color: #fca5a5; }
-
-    .feature-item {
-        background: #0d0d14;
-        border: 1px solid #1f1f2e;
-        border-radius: 8px;
-        padding: 0.4rem 0.8rem;
-        color: #9ca3af;
-        font-size: 0.82rem;
-        margin-bottom: 0.4rem;
-    }
-
-    .tech-tag {
-        background: #1e1b4b;
-        color: #a78bfa;
-        padding: 3px 10px;
-        border-radius: 999px;
-        font-size: 0.78rem;
-        margin-right: 4px;
-    }
-
-    .timeline-item {
-        border-left: 2px solid #6366f1;
-        padding-left: 0.8rem;
-        margin-bottom: 0.6rem;
-        color: #9ca3af;
-        font-size: 0.85rem;
-    }
-
-    .stButton > button {
-        background: #6366f1;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-weight: 500;
-    }
-    .stButton > button:hover { background: #4f46e5; }
-    </style>
-""", unsafe_allow_html=True)
-
-
-# ── AUTH CHECK ────────────────────────────────────────
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.auth import check_session
-
+# ── SESSION CHECK ─────────────────────────────────────
 check_session()
 if "user" not in st.session_state or not st.session_state.user:
     st.switch_page("pages/2_login.py")
 
-
-# ── HEADER ───────────────────────────────────────────
-col1, col2 = st.columns([3, 1])
-with col1:
-    st.markdown("""
-        <h1 style='color:white; margin-bottom:0.3rem;'>
-            AI Project Idea Generator
-        </h1>
-        <p style='color:#9ca3af;'>
-            Tell us your stack and we generate winning buildathon ideas
-        </p>
-    """, unsafe_allow_html=True)
-with col2:
-    if st.button("Back to Dashboard"):
-        st.switch_page("pages/6_dashboard.py")
-
-st.markdown("---")
-
-
-# ── INPUT SECTION ─────────────────────────────────────
-st.markdown("### Your Team Details")
+# ── NAV ───────────────────────────────────────────────
 st.markdown(
-    "<small style='color:#6b7280'>The more details you give, "
-    "the better the ideas</small>",
+    "<div style='height:32px'></div>",
     unsafe_allow_html=True
 )
-st.markdown("<br>", unsafe_allow_html=True)
 
-col1, col2 = st.columns(2)
-
-with col1:
-    all_skills = [
-        "Python", "JavaScript", "React", "Node.js",
-        "Flutter", "Machine Learning", "UI/UX Design",
-        "DevOps", "Blockchain", "Data Science",
-        "Django", "FastAPI", "Next.js", "SQL",
-        "TensorFlow", "AWS", "Docker"
-    ]
-
-    selected_skills = st.multiselect(
-        "Team Skills (select all that apply)",
-        options=all_skills,
-        default=st.session_state.get(
-            "profile", {}
-        ).get("skills", [])
+n1, n2, n3 = st.columns([1, 5, 1])
+with n1:
+    st.markdown(
+        "<div class='hm-logo'>HackMate</div>",
+        unsafe_allow_html=True
     )
+with n3:
+    if st.button("Dashboard"):
+        st.switch_page("pages/6_dashboard.py")
 
-    experience = st.select_slider(
-        "Team Experience Level",
-        options=["Beginner", "Intermediate", "Advanced"]
-    )
+st.markdown("<hr>", unsafe_allow_html=True)
 
-with col2:
-    all_goals = [
-        "Win prizes",
-        "Learn new technologies",
-        "Network with developers",
-        "Build my portfolio",
-        "Launch a startup",
-        "Have fun and experiment"
-    ]
+# ── HEADER ────────────────────────────────────────────
+st.markdown(
+    "<div style='margin-bottom:2rem;'>"
+    "<div class='hm-label'>AI Powered</div>"
+    "<div class='hm-title'>Project Idea Generator</div>"
+    "<div style='font-size:0.85rem; color:#52525b;"
+    "margin-top:0.5rem; font-weight:300;'>"
+    "Tell us your stack — we generate winning buildathon ideas."
+    "</div></div>",
+    unsafe_allow_html=True
+)
 
-    from utils.supabase_client import parse_list_field
+# ── OPTIONS LISTS ─────────────────────────────────────
+all_skills = [
+    "Python", "JavaScript", "React", "Node.js",
+    "Flutter", "Machine Learning", "UI/UX Design",
+    "DevOps", "Blockchain", "Data Science",
+    "Django", "FastAPI", "Next.js", "SQL",
+    "TensorFlow", "AWS", "Docker"
+]
 
-    saved_profile = st.session_state.get("profile", {})
+all_goals = [
+    "Win prizes",
+    "Learn new technologies",
+    "Network with developers",
+    "Build my portfolio",
+    "Launch a startup",
+    "Have fun and experiment"
+]
 
-    safe_skills = [
-        s for s in parse_list_field(saved_profile.get("skills", []))
-        if s in all_skills
-    ]
+# ── SAFE DEFAULTS ─────────────────────────────────────
+saved_profile = st.session_state.get("profile", {})
+
+safe_skills = [
+    s for s in parse_list_field(saved_profile.get("skills", []))
+    if s in all_skills
+]
 
 safe_goals = [
     g for g in parse_list_field(saved_profile.get("goals", []))
     if g in all_goals
 ]
 
-# Handle if goals saved as string accidentally
-if isinstance(saved_goals_raw, str):
-    import json
-    try:
-        saved_goals_raw = json.loads(saved_goals_raw)
-    except Exception:
-        saved_goals_raw = []
+# ── INPUTS ────────────────────────────────────────────
+st.markdown(
+    "<div class='hm-label'>Your Team Details</div>",
+    unsafe_allow_html=True
+)
+st.markdown(
+    "<div style='height:0.5rem'></div>",
+    unsafe_allow_html=True
+)
 
-# Only keep goals that exist in the options list
-valid_goal_defaults = [
-    g for g in saved_goals_raw
-    if g in all_goals
-]
+col1, col2 = st.columns(2)
 
-team_size = st.slider(
+with col1:
+    selected_skills = st.multiselect(
+        "Team Skills",
+        options=all_skills,
+        default=safe_skills
+    )
+
+    experience = st.select_slider(
+        "Experience Level",
+        options=["Beginner", "Intermediate", "Advanced"]
+    )
+
+with col2:
+    selected_goals = st.multiselect(
+        "Team Goals",
+        options=all_goals,
+        default=safe_goals
+    )
+
+    team_size = st.slider(
         "Team Size",
         min_value=1,
         max_value=6,
         value=3
     )
 
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown(
+    "<div style='height:1rem'></div>",
+    unsafe_allow_html=True
+)
 
 # ── GENERATE BUTTON ───────────────────────────────────
-generate_col, _ = st.columns([1, 2])
-with generate_col:
-    generate_clicked = st.button(
-        "Generate Ideas with AI",
+btn_col, _ = st.columns([1, 3])
+with btn_col:
+    generate = st.button(
+        "Generate Ideas",
         use_container_width=True
     )
 
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown(
+    "<div style='height:1rem'></div>",
+    unsafe_allow_html=True
+)
 
-
-# ── GENERATE IDEAS ────────────────────────────────────
-if generate_clicked:
-
+# ── RESULTS ───────────────────────────────────────────
+if generate:
     if not selected_skills:
         st.error("Please select at least one skill.")
-
     else:
-        with st.spinner("AI is generating your project ideas..."):
+        with st.spinner("AI is thinking..."):
             try:
                 result = generate_project_ideas(
                     skills=selected_skills,
@@ -218,100 +156,174 @@ if generate_clicked:
 
                 ideas = result.get("ideas", [])
 
-                st.markdown("## Your AI-Generated Project Ideas")
+                st.markdown("<hr>", unsafe_allow_html=True)
                 st.markdown(
-                    "<small style='color:#6b7280'>"
-                    "Based on your team's skills and goals</small>",
+                    "<div class='hm-label'>Results</div>"
+                    "<div class='hm-title' "
+                    "style='margin-bottom:1.5rem;'>"
+                    "Your AI-Generated Ideas</div>",
                     unsafe_allow_html=True
                 )
-                st.markdown("<br>", unsafe_allow_html=True)
 
                 for i, idea in enumerate(ideas):
                     difficulty = idea.get("difficulty", "Medium")
-                    diff_class = difficulty.lower()
 
-                    st.markdown(f"""
-                        <div class='idea-card'>
-                            <div style='display:flex; justify-content:space-between;
-                                 align-items:start; margin-bottom:0.8rem;'>
-                                <div>
-                                    <div style='font-size:1.2rem; font-weight:700;
-                                         color:white;'>
-                                        {i+1}. {idea.get("title")}
-                                    </div>
-                                    <div style='color:#6366f1; font-size:0.9rem;
-                                         margin-top:0.2rem;'>
-                                        {idea.get("tagline")}
-                                    </div>
-                                </div>
-                                <span class='difficulty-badge {diff_class}'>
-                                    {difficulty}
-                                </span>
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
+                    if difficulty == "Easy":
+                        diff_color = "#34d399"
+                    elif difficulty == "Hard":
+                        diff_color = "#f87171"
+                    else:
+                        diff_color = "#a1a1aa"
 
-                    col1, col2 = st.columns(2)
+                    # Idea header
+                    st.markdown(
+                        f"<div style='background:#111113;"
+                        f"border:1px solid #1c1c1f;"
+                        f"border-radius:16px; padding:1.8rem;"
+                        f"margin-bottom:0.5rem;'>"
+                        f"<div style='display:flex;"
+                        f"justify-content:space-between;"
+                        f"align-items:center;"
+                        f"margin-bottom:0.5rem;'>"
+                        f"<div style='font-family:Playfair Display,serif;"
+                        f"font-size:1.2rem; font-weight:500;"
+                        f"color:#f4f4f5;'>"
+                        f"{i+1}. {idea.get('title')}</div>"
+                        f"<span style='font-size:0.7rem;font-weight:500;"
+                        f"letter-spacing:0.08em;color:{diff_color};"
+                        f"border:1px solid {diff_color}22;"
+                        f"padding:3px 12px;border-radius:999px;'>"
+                        f"{difficulty}</span></div>"
+                        f"<div style='font-size:0.88rem;color:#71717a;"
+                        f"font-style:italic;margin-bottom:1rem;'>"
+                        f"{idea.get('tagline')}</div>"
+                        f"</div>",
+                        unsafe_allow_html=True
+                    )
 
-                    with col1:
-                        st.markdown("**The Problem**")
+                    c1, c2 = st.columns(2)
+
+                    with c1:
                         st.markdown(
-                            f"<p style='color:#9ca3af; font-size:0.88rem;'>"
-                            f"{idea.get('problem')}</p>",
+                            "<div style='font-size:0.7rem;"
+                            "font-weight:500;letter-spacing:0.1em;"
+                            "text-transform:uppercase;color:#3f3f46;"
+                            "margin-bottom:0.5rem;'>The Problem</div>",
+                            unsafe_allow_html=True
+                        )
+                        st.markdown(
+                            f"<div style='font-size:0.85rem;"
+                            f"color:#71717a;line-height:1.8;"
+                            f"font-weight:300;margin-bottom:1rem;'>"
+                            f"{idea.get('problem')}</div>",
                             unsafe_allow_html=True
                         )
 
-                        st.markdown("**Our Solution**")
                         st.markdown(
-                            f"<p style='color:#9ca3af; font-size:0.88rem;'>"
-                            f"{idea.get('solution')}</p>",
+                            "<div style='font-size:0.7rem;"
+                            "font-weight:500;letter-spacing:0.1em;"
+                            "text-transform:uppercase;color:#3f3f46;"
+                            "margin-bottom:0.5rem;'>Our Solution</div>",
+                            unsafe_allow_html=True
+                        )
+                        st.markdown(
+                            f"<div style='font-size:0.85rem;"
+                            f"color:#71717a;line-height:1.8;"
+                            f"font-weight:300;margin-bottom:1rem;'>"
+                            f"{idea.get('solution')}</div>",
                             unsafe_allow_html=True
                         )
 
-                        st.markdown("**Key Features**")
-                        for feature in idea.get("key_features", []):
+                        st.markdown(
+                            "<div style='font-size:0.7rem;"
+                            "font-weight:500;letter-spacing:0.1em;"
+                            "text-transform:uppercase;color:#3f3f46;"
+                            "margin-bottom:0.5rem;'>Key Features</div>",
+                            unsafe_allow_html=True
+                        )
+                        for f in idea.get("key_features", []):
                             st.markdown(
-                                f"<div class='feature-item'>✦ {feature}</div>",
+                                f"<div style='background:#18181b;"
+                                f"border:1px solid #27272a;"
+                                f"border-radius:8px;"
+                                f"padding:0.5rem 0.9rem;"
+                                f"font-size:0.82rem;color:#71717a;"
+                                f"font-weight:300;"
+                                f"margin-bottom:0.4rem;'>"
+                                f"{f}</div>",
                                 unsafe_allow_html=True
                             )
 
-                    with col2:
-                        st.markdown("**Tech Stack**")
-                        tech_tags = "".join([
-                            f"<span class='tech-tag'>{t}</span>"
+                    with c2:
+                        st.markdown(
+                            "<div style='font-size:0.7rem;"
+                            "font-weight:500;letter-spacing:0.1em;"
+                            "text-transform:uppercase;color:#3f3f46;"
+                            "margin-bottom:0.5rem;'>Tech Stack</div>",
+                            unsafe_allow_html=True
+                        )
+                        tech_html = "".join([
+                            f"<span class='hm-tag'>{t}</span>"
                             for t in idea.get("tech_stack", [])
                         ])
                         st.markdown(
-                            f"<div style='margin-bottom:1rem;'>"
-                            f"{tech_tags}</div>",
+                            f"<div style='margin-bottom:1.2rem;'>"
+                            f"{tech_html}</div>",
                             unsafe_allow_html=True
                         )
 
-                        st.markdown("**3-Day MVP Timeline**")
+                        st.markdown(
+                            "<div style='font-size:0.7rem;"
+                            "font-weight:500;letter-spacing:0.1em;"
+                            "text-transform:uppercase;color:#3f3f46;"
+                            "margin-bottom:0.5rem;'>3-Day Timeline</div>",
+                            unsafe_allow_html=True
+                        )
                         timeline = idea.get("mvp_timeline", {})
                         for day, task in timeline.items():
-                            day_num = day.replace("day_", "Day ")
+                            day_label = day.replace("day_", "Day ")
                             st.markdown(
-                                f"<div class='timeline-item'>"
-                                f"<strong style='color:white;'>{day_num}:</strong>"
-                                f" {task}</div>",
+                                f"<div style='border-left:"
+                                f"1px solid #3f3f46;"
+                                f"padding-left:0.8rem;"
+                                f"margin-bottom:0.7rem;"
+                                f"font-size:0.82rem;'>"
+                                f"<div style='font-size:0.68rem;"
+                                f"color:#3f3f46;font-weight:500;"
+                                f"letter-spacing:0.08em;"
+                                f"text-transform:uppercase;"
+                                f"margin-bottom:2px;'>"
+                                f"{day_label}</div>"
+                                f"<div style='color:#71717a;"
+                                f"font-weight:300;'>{task}</div>"
+                                f"</div>",
                                 unsafe_allow_html=True
                             )
 
-                        st.markdown("**Wow Factor**")
                         st.markdown(
-                            f"<div style='background:#0d0f1f; border:1px solid "
-                            f"#6366f1; border-radius:8px; padding:0.6rem 0.8rem;"
-                            f"color:#a78bfa; font-size:0.85rem;'>"
-                            f"✦ {idea.get('wow_factor')}</div>",
+                            "<div style='font-size:0.7rem;"
+                            "font-weight:500;letter-spacing:0.1em;"
+                            "text-transform:uppercase;color:#3f3f46;"
+                            "margin-bottom:0.5rem;margin-top:0.5rem;'>"
+                            "Wow Factor</div>",
+                            unsafe_allow_html=True
+                        )
+                        st.markdown(
+                            f"<div style='background:#18181b;"
+                            f"border:1px solid #27272a;"
+                            f"border-radius:10px;"
+                            f"padding:0.8rem 1rem;"
+                            f"font-size:0.82rem;color:#a1a1aa;"
+                            f"font-style:italic;font-weight:300;'>"
+                            f"{idea.get('wow_factor')}</div>",
                             unsafe_allow_html=True
                         )
 
-                    st.markdown("---")
+                    st.markdown("<hr>", unsafe_allow_html=True)
 
             except Exception as e:
-                st.error(f"AI generation failed: {e}")
+                st.error(f"Generation failed: {e}")
                 st.info(
-                    "Make sure your OpenAI API key is set "
-                    "correctly in your .env file."
+                    "Make sure your GROQ_API_KEY "
+                    "is set correctly in your .env file."
                 )
