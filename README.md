@@ -140,25 +140,43 @@ team_connections (
 ---
 
 ## How It Works
+```
 
-Sign up → Create your developer profile
-(skills, experience, goals, availability)
-Dashboard → AI immediately shows your top matches
-with compatibility scores and reasons
-Find Teammates → Browse real developer profiles
-→ Click "Check Compatibility" for AI analysis
-→ Click "Connect" to send a request
-Accept Request → Connected user appears in your team
-→ Team Workspace unlocked for both users
-Team Workspace → Add tasks and assign to team members
-→ Move tasks: To Do → In Progress → Done
-→ Chat with your team
-→ Track overall project progress
-Generate Ideas → Enter your team's combined skills
-→ Get 3 AI-generated buildathon ideas
-→ Each with full features, stack and timeline
+╔═══════════════════════════════════════════════════════════════════╗
+║                         HACKMATE FLOW                             ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║   01  SIGN UP          Create your developer profile              ║
+║       └─────────────── Skills · Experience · Goals · Availability ║
+║             │                                                     ║
+║             ▼                                                     ║
+║   02  DASHBOARD        AI shows your top matches instantly        ║
+║       └─────────────── Compatibility scores · Match reasoning     ║
+║             │                                                     ║
+║             ▼                                                     ║
+║   03  FIND TEAMMATES   Browse real developer profiles             ║
+║       ├─────────────── Check AI compatibility score               ║
+║       └─────────────── Send connection request with message       ║
+║             │                                                     ║
+║             ▼                                                     ║
+║   04  CONNECT          Accept or decline incoming requests        ║
+║       └─────────────── Accepted → Team workspace unlocked         ║
+║             │                                                     ║
+║             ▼                                                     ║
+║   05  TEAM WORKSPACE   Collaborate and ship together              ║
+║       ├─────────────── Add tasks · Assign to members              ║
+║       ├─────────────── Move tasks: To Do → In Progress → Done     ║
+║       └─────────────── Team chat · Progress tracking              ║
+║             │                                                     ║
+║             ▼                                                     ║
+║   06  GENERATE IDEAS   AI creates your buildathon strategy        ║
+║       ├─────────────── 3 unique project ideas for your stack      ║
+║       ├─────────────── Features · Tech stack · Timeline           ║
+║       └─────────────── 3-day MVP roadmap · Judge wow factor       ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
 
-
+```
 ---
 
 ## Getting Started Locally
