@@ -503,9 +503,8 @@ with right:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    if st.button("Update Profile", use_container_width=True):
-        st.session_state.pop("profile", None)
-        st.switch_page("pages/3_profile_setup.py")
+    if st.button("Edit Profile", use_container_width=True):
+        st.switch_page("pages/8_edit_profile.py")
 
     st.markdown("<br><br>", unsafe_allow_html=True)
 
