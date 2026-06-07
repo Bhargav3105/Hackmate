@@ -27,27 +27,75 @@ def load_css():
     }
 
     /* ── ANIMATIONS ─────────────────────────── */
-    @keyframes fadeUp {
-        from { opacity: 0; transform: translateY(24px); }
+    @keyframes revealUp {
+        from { opacity: 0; transform: translateY(40px); }
         to   { opacity: 1; transform: translateY(0); }
     }
-
-    @keyframes fadeIn {
+    @keyframes revealFade {
         from { opacity: 0; }
         to   { opacity: 1; }
     }
-
-    @keyframes scaleIn {
-        from { opacity: 0; transform: scale(0.97); }
-        to   { opacity: 1; transform: scale(1); }
+    @keyframes shimmer {
+        0%   { background-position: -400px 0; }
+        100% { background-position: 400px 0; }
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0.4; }
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes counterUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
     }
 
-    .anim-1 { animation: fadeUp 0.7s ease both; }
-    .anim-2 { animation: fadeUp 0.7s ease 0.15s both; }
-    .anim-3 { animation: fadeUp 0.7s ease 0.3s both; }
-    .anim-4 { animation: fadeUp 0.7s ease 0.45s both; }
-    .anim-fade { animation: fadeIn 1s ease both; }
-    .anim-scale { animation: scaleIn 0.6s ease both; }
+    .reveal-1 { animation: revealUp 0.9s cubic-bezier(0.16,1,0.3,1) 0.1s both; }
+    .reveal-2 { animation: revealUp 0.9s cubic-bezier(0.16,1,0.3,1) 0.25s both; }
+    .reveal-3 { animation: revealUp 0.9s cubic-bezier(0.16,1,0.3,1) 0.4s both; }
+    .reveal-4 { animation: revealUp 0.9s cubic-bezier(0.16,1,0.3,1) 0.55s both; }
+    .reveal-fade { animation: revealFade 1.2s ease 0.2s both; }
+    .stat-reveal-1 { animation: counterUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.3s both; }
+    .stat-reveal-2 { animation: counterUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.45s both; }
+    .stat-reveal-3 { animation: counterUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.6s both; }
+    .stat-reveal-4 { animation: counterUp 0.8s cubic-bezier(0.16,1,0.3,1) 0.75s both; }
+    .hm-page-enter { animation: fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+
+    /* ── LOADING STATES ─────────────────────── */
+    .hm-skeleton {
+        background: linear-gradient(
+            90deg,
+            #1c1c1f 25%,
+            #27272a 50%,
+            #1c1c1f 75%
+        );
+        background-size: 400px 100%;
+        animation: shimmer 1.4s ease infinite;
+        border-radius: 8px;
+    }
+
+    .hm-spinner {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #27272a;
+        border-top-color: #d4d4d8;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        display: inline-block;
+    }
+
+    .hm-loading-text {
+        animation: pulse 1.5s ease infinite;
+        color: #52525b;
+        font-size: 0.82rem;
+        font-weight: 300;
+        letter-spacing: 0.04em;
+    }
 
     /* ── LOGO ───────────────────────────────── */
     .hm-logo {
@@ -115,10 +163,15 @@ def load_css():
     .hm-feature {
         padding: 1.8rem 0;
         border-top: 1px solid #1c1c1f;
-        transition: border-color 0.3s;
+        transition: padding-left 0.4s cubic-bezier(0.16,1,0.3,1),
+                    border-color 0.3s ease;
+        cursor: default;
     }
 
-    .hm-feature:hover { border-top-color: #3f3f46; }
+    .hm-feature:hover {
+        padding-left: 1rem;
+        border-top-color: #52525b;
+    }
 
     .hm-feature-number {
         font-size: 0.68rem;
@@ -214,9 +267,8 @@ def load_css():
         display: flex;
         align-items: center;
         gap: 1rem;
-        transition: border-color 0.25s, background 0.25s,
-                    transform 0.25s;
-        animation: scaleIn 0.5s ease both;
+        transition: border-color 0.25s, background 0.25s, transform 0.25s;
+        animation: fadeInUp 0.5s ease both;
     }
 
     .hm-match:hover {
@@ -313,7 +365,7 @@ def load_css():
         border: 1px solid #1c1c1f;
         border-radius: 14px;
         padding: 1.6rem;
-        animation: fadeUp 0.6s ease both;
+        animation: fadeInUp 0.6s ease both;
     }
 
     .hm-profile-name {
@@ -358,7 +410,7 @@ def load_css():
         color: #a1a1aa;
         font-weight: 300;
         transition: border-color 0.2s;
-        animation: fadeUp 0.4s ease both;
+        animation: fadeInUp 0.4s ease both;
     }
 
     .hm-task:hover { border-color: #3f3f46; }
@@ -380,7 +432,7 @@ def load_css():
         font-size: 0.83rem;
         color: #d4d4d8;
         font-weight: 300;
-        animation: fadeUp 0.4s ease both;
+        animation: fadeInUp 0.4s ease both;
     }
 
     .hm-chat-other {
@@ -392,7 +444,7 @@ def load_css():
         font-size: 0.83rem;
         color: #71717a;
         font-weight: 300;
-        animation: fadeUp 0.4s ease both;
+        animation: fadeInUp 0.4s ease both;
     }
 
     .hm-chat-sender {
@@ -528,58 +580,4 @@ def load_css():
         margin: 2.5rem 0 !important;
     }
     </style>
-
-    /* ── LOADING STATES ─────────────────────── */
-    @keyframes shimmer {
-        0%   { background-position: -400px 0; }
-        100% { background-position: 400px 0; }
-    }
-
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50%       { opacity: 0.4; }
-    }
-
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(16px); }
-        to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .hm-skeleton {
-        background: linear-gradient(
-            90deg,
-            #1c1c1f 25%,
-            #27272a 50%,
-            #1c1c1f 75%
-        );
-        background-size: 400px 100%;
-        animation: shimmer 1.4s ease infinite;
-        border-radius: 8px;
-    }
-
-    .hm-spinner {
-        width: 18px;
-        height: 18px;
-        border: 2px solid #27272a;
-        border-top-color: #d4d4d8;
-        border-radius: 50%;
-        animation: spin 0.7s linear infinite;
-        display: inline-block;
-    }
-
-    .hm-loading-text {
-        animation: pulse 1.5s ease infinite;
-        color: #52525b;
-        font-size: 0.82rem;
-        font-weight: 300;
-        letter-spacing: 0.04em;
-    }
-
-    .hm-page-enter {
-        animation: fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
-    }
     """
