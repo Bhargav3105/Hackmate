@@ -99,12 +99,33 @@ def load_css():
 
     /* ── LOGO ───────────────────────────────── */
     .hm-logo {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.35rem;
-        font-weight: 500;
-        color: #f4f4f5;
-        letter-spacing: 0.02em;
+        font-family: 'Sora', sans-serif !important;
+
+        font-size: 4rem !important;   /* BIG logo */
+
+        font-weight: 900 !important;
+
+        letter-spacing: -0.08em !important;
+
+        line-height: 1 !important;
+
+        background: linear-gradient(
+            135deg,
+            #ffffff,
+            #a78bfa,
+            #60a5fa
+        ) !important;
+
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+
+        display: inline-block !important;
+
+        transform: scale(1.15);
+
+        cursor: default;
     }
+
 
     /* ── HERO ───────────────────────────────── */
     .hm-headline {
@@ -578,6 +599,11 @@ def load_css():
         border: none !important;
         border-top: 1px solid #1c1c1f !important;
         margin: 2.5rem 0 !important;
+    }
+    /* Smaller navbar button */
+    .stButton > button {
+        font-size: 0.85rem !important;
+        padding: 0.35rem 1rem !important;
     }
     </style>
     """

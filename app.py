@@ -2,6 +2,7 @@ import streamlit as st
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.styles import load_css
+from utils.animations import load_animations
 
 st.set_page_config(
     page_title="HackMate",
@@ -10,7 +11,16 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-st.markdown(load_css(), unsafe_allow_html=True)
+st.markdown(load_animations(), unsafe_allow_html=True)
+
+st.markdown(
+    '''
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    ''',
+    unsafe_allow_html=True
+)
 
 # Domitur-inspired animation styles + scroll reveal
 st.markdown("""
@@ -189,18 +199,40 @@ st.markdown("""
 
 # ── NAV ───────────────────────────────────────────────
 st.markdown(
-    "<div style='height:48px'></div>",
+    "<div style='height:10px'></div>",
     unsafe_allow_html=True
 )
 
-n1, n2, n3 = st.columns([1, 5, 1])
+n1, n2, n3 = st.columns([4, 3, 0.8])
+
 with n1:
     st.markdown(
-        "<div class='hm-logo reveal-fade'>HackMate</div>",
+        """
+        <div class='reveal-fade'
+             style='
+                font-size:80px;
+                font-weight:900;
+                line-height:1;
+                letter-spacing:-4px;
+                font-family:Sora,sans-serif;
+                background:linear-gradient(
+                    135deg,
+                    #ffffff,
+                    #c4b5fd,
+                    #60a5fa
+                );
+                -webkit-background-clip:text;
+                -webkit-text-fill-color:transparent;
+                margin-top:-10px;
+             '>
+            HackMate
+        </div>
+        """,
         unsafe_allow_html=True
     )
+
 with n3:
-    if st.button("Sign in"):
+    if st.button("Sign in", use_container_width=False):
         st.switch_page("pages/2_login.py")
 
 st.markdown(
@@ -225,8 +257,10 @@ with col1:
     )
     st.markdown(
         "<div class='hero-title reveal-2'>"
-        "The intelligent way<br>to build your<br>"
-        "hackathon team."
+        "<span class='hero-gradient'>"
+        "Find Your Perfect"
+        "</span><br>"
+        "Hackathon Team."
         "</div>",
         unsafe_allow_html=True
     )
@@ -247,7 +281,7 @@ with col2:
     # Elegant floating preview card
     st.markdown("""
         <div class='reveal-4' style='
-            background:#111113;
+            class='glass-card'
             border:1px solid #1c1c1f;
             border-radius:20px;
             padding:2rem;
@@ -421,6 +455,67 @@ st.markdown(
     "<div style='height:100px'></div>",
     unsafe_allow_html=True
 )
+
+# ── PROJECT CONTRIBUTORS ──────────────────────────────
+st.markdown("## ")
+st.markdown("## ")
+
+st.markdown(
+    "<p style='text-align:center; color:#71717a; letter-spacing:3px; font-size:12px;'>THE TEAM</p>",
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    "<h1 style='text-align:center; color:white;'>Project Contributors</h1>",
+    unsafe_allow_html=True
+)
+
+contributors = [
+    {
+        "name": "Bhargav Bathla",
+        "role": "Project Leader",
+        "skills": "Full Stack Development • AI Integration • Product Strategy"
+    },
+    {
+        "name": "Aishwary Raghuwansi",
+        "role": "Frontend Developer",
+        "skills": "UI/UX • Frontend Development • Interface Design"
+    },
+    {
+        "name": "Rajat Kumar Singh",
+        "role": "Backend Developer",
+        "skills": "Backend Logic • APIs • Database Integration"
+    },
+    {
+        "name": "Tejas Baghel",
+        "role": "AI/ML Contributor",
+        "skills": "Machine Learning • Matchmaking Logic • AI Workflows"
+    }
+]
+
+col1, col2 = st.columns(2)
+
+for i, person in enumerate(contributors):
+
+    with (col1 if i % 2 == 0 else col2):
+
+        with st.container(border=True):
+
+            st.subheader(person["name"])
+
+            st.caption(person["role"])
+
+            st.markdown(
+                f"""
+<span style="color:#a78bfa;">
+{person["skills"]}
+</span>
+                """,
+                unsafe_allow_html=True
+            )
+
+st.markdown("## ")
+st.markdown("## ")
 
 # ── CTA ───────────────────────────────────────────────
 st.markdown(
