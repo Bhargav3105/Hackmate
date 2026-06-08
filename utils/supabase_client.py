@@ -169,28 +169,42 @@ def create_team_connection(user1_id, user2_id,
     """Creates a team connection when request is accepted"""
     try:
         client = get_admin_client()
+        u1 = str(user1_id)
+        u2 = str(user2_id)
 
-        # Check if already connected
-        existing = client.table("team_connections")\
-            .select("*")\
-            .or_(
-                f"and(user1_id.eq.{user1_id},"
-                f"user2_id.eq.{user2_id}),"
-                f"and(user1_id.eq.{user2_id},"
-                f"user2_id.eq.{user1_id})"
-            ).execute()
+        # Don't connect sample profiles
+        if u1.startswith("sample-") or \
+           u2.startswith("sample-"):
+            return False
 
-        if existing.data:
+        # Check if already connected using two queries
+        existing1 = client.table("team_connections")\
+            .select("id")\
+            .eq("user1_id", u1)\
+            .eq("user2_id", u2)\
+            .execute()
+
+        existing2 = client.table("team_connections")\
+            .select("id")\
+            .eq("user1_id", u2)\
+            .eq("user2_id", u1)\
+            .execute()
+
+        if existing1.data or existing2.data:
+            print(f"Already connected: {u1} - {u2}")
             return True
 
+        # Create the connection
         client.table("team_connections").insert({
-            "user1_id": user1_id,
-            "user2_id": user2_id,
+            "user1_id": u1,
+            "user2_id": u2,
             "user1_name": user1_name,
             "user2_name": user2_name
         }).execute()
 
+        print(f"Created connection: {user1_name} — {user2_name}")
         return True
+
     except Exception as e:
         print(f"Error creating connection: {e}")
         return False
@@ -200,28 +214,205 @@ def get_team_members(user_id):
     """Get all people connected with this user"""
     try:
         client = get_admin_client()
+        user_id_str = str(user_id)
+
         response = client.table("team_connections")\
             .select("*")\
             .or_(
-                f"user1_id.eq.{user_id},"
-                f"user2_id.eq.{user_id}"
+                f"user1_id.eq.{user_id_str},"
+                f"user2_id.eq.{user_id_str}"
             ).execute()
 
         members = []
         for conn in response.data or []:
-            if conn["user1_id"] == user_id:
+            # Always compare as strings
+            if str(conn["user1_id"]) == user_id_str:
                 members.append({
                     "name": conn["user2_name"],
-                    "id": conn["user2_id"],
+                    "id": str(conn["user2_id"]),
                     "connected_at": conn["connected_at"]
                 })
             else:
                 members.append({
                     "name": conn["user1_name"],
-                    "id": conn["user1_id"],
+                    "id": str(conn["user1_id"]),
                     "connected_at": conn["connected_at"]
                 })
+
         return members
+
     except Exception as e:
         print(f"Error getting team members: {e}")
         return []
+
+def propose_team_member(
+    invitee_id, invitee_name,
+    proposed_by_id, proposed_by_name
+):
+    """
+    Proposes adding someone to the team.
+    Creates invitation + vote requests for all
+    existing team members.
+    """
+    try:
+        client = get_admin_client()
+
+        # Get all current team members of proposer
+        current_members = get_team_members(proposed_by_id)
+
+        # If no teammates yet, just add directly
+        if not current_members:
+            create_team_connection(
+                user1_id=proposed_by_id,
+                user2_id=invitee_id,
+                user1_name=proposed_by_name,
+                user2_name=invitee_name
+            )
+            return "added_directly"
+
+        # Create invitation record
+        inv = client.table("team_invitations").insert({
+            "invitee_id": str(invitee_id),
+            "invitee_name": invitee_name,
+            "proposed_by_id": proposed_by_id,
+            "proposed_by_name": proposed_by_name,
+            "anchor_user_id": proposed_by_id,
+            "status": "voting"
+        }).execute()
+
+        invitation_id = inv.data[0]["id"]
+
+        # Create vote for each existing team member
+        # (proposer auto-votes accept)
+        for member in current_members:
+            client.table("team_votes").insert({
+                "invitation_id": invitation_id,
+                "voter_id": member["id"],
+                "voter_name": member["name"],
+                "vote": "pending"
+            }).execute()
+
+        return "voting_started"
+
+    except Exception as e:
+        print(f"Error proposing member: {e}")
+        return "error"
+
+
+def get_pending_votes_for_user(user_id):
+    """
+    Get all invitations where this user needs to vote.
+    """
+    try:
+        client = get_admin_client()
+
+        # Get all pending votes for this user
+        votes = client.table("team_votes")\
+            .select("*, team_invitations(*)")\
+            .eq("voter_id", user_id)\
+            .eq("vote", "pending")\
+            .execute()
+
+        return votes.data or []
+
+    except Exception as e:
+        print(f"Error getting votes: {e}")
+        return []
+
+
+def cast_vote(vote_id, invitation_id,
+              vote_value, voter_id, voter_name,
+              invitee_id, invitee_name):
+    """
+    Cast a vote. If all votes accepted → add to team.
+    If any rejected → reject invitation.
+    """
+    try:
+        client = get_admin_client()
+
+        # Record this vote
+        client.table("team_votes")\
+            .update({
+                "vote": vote_value,
+                "voted_at": "now()"
+            })\
+            .eq("id", vote_id)\
+            .execute()
+
+        # If rejected — close invitation immediately
+        if vote_value == "rejected":
+            client.table("team_invitations")\
+                .update({"status": "rejected"})\
+                .eq("id", invitation_id)\
+                .execute()
+            return "rejected"
+
+        # Check if ALL votes are now accepted
+        all_votes = client.table("team_votes")\
+            .select("*")\
+            .eq("invitation_id", invitation_id)\
+            .execute()
+
+        votes_list = all_votes.data or []
+        all_accepted = all(
+            v["vote"] == "accepted"
+            for v in votes_list
+        )
+
+        if all_accepted:
+            # Get invitation details
+            inv = client.table("team_invitations")\
+                .select("*")\
+                .eq("id", invitation_id)\
+                .execute()
+
+            if inv.data:
+                inv_data = inv.data[0]
+                anchor_id = inv_data["anchor_user_id"]
+
+                # Get anchor user name
+                anchor = client.table("profiles")\
+                    .select("full_name")\
+                    .eq("id", anchor_id)\
+                    .execute()
+
+                anchor_name = anchor.data[0]["full_name"] \
+                    if anchor.data else "User"
+
+                # Add invitee to team
+                create_team_connection(
+                    user1_id=anchor_id,
+                    user2_id=invitee_id,
+                    user1_name=anchor_name,
+                    user2_name=invitee_name
+                )
+
+                # Mark invitation as approved
+                client.table("team_invitations")\
+                    .update({"status": "approved"})\
+                    .eq("id", invitation_id)\
+                    .execute()
+
+                return "approved"
+
+        return "vote_recorded"
+
+    except Exception as e:
+        print(f"Error casting vote: {e}")
+        return "error"
+
+
+def get_invitation_status(proposed_by_id, invitee_id):
+    """Check if an invitation already exists"""
+    try:
+        client = get_admin_client()
+        result = client.table("team_invitations")\
+            .select("*")\
+            .eq("proposed_by_id", proposed_by_id)\
+            .eq("invitee_id", str(invitee_id))\
+            .eq("status", "voting")\
+            .execute()
+        return result.data[0] if result.data else None
+    except Exception as e:
+        print(f"Error checking invitation: {e}")
+        return None

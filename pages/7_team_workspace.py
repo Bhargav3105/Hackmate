@@ -76,6 +76,37 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# ── PENDING VOTES ─────────────────────────────────────
+from utils.supabase_client import get_pending_votes_for_user
+
+pending_votes = get_pending_votes_for_user(user.id) \
+    if user else []
+
+if pending_votes:
+    st.markdown(
+        "<div style='background:#111113;"
+        "border:1px solid #27272a;"
+        "border-radius:12px;padding:1rem 1.2rem;"
+        "margin-bottom:1.5rem;'>"
+        "<div class='hm-label' style='margin-bottom:0.4rem;'>"
+        "Pending Team Votes</div>",
+        unsafe_allow_html=True
+    )
+    for v in pending_votes:
+        inv = v.get("team_invitations", {})
+        st.markdown(
+            f"<div style='font-size:0.82rem;color:#a1a1aa;"
+            f"font-weight:300;'>"
+            f"Vote pending for "
+            f"<span style='color:#f4f4f5;"
+            f"font-family:Playfair Display,serif;'>"
+            f"{inv.get('invitee_name', 'someone')}"
+            f"</span> — check Dashboard to vote."
+            f"</div>",
+            unsafe_allow_html=True
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
+
 members_html = "".join([
     f"<span style='display:inline-flex;align-items:center;"
     f"gap:6px;background:#111113;border:1px solid #1c1c1f;"

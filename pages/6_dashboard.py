@@ -242,6 +242,112 @@ if sent:
         )
     st.markdown("<hr>", unsafe_allow_html=True)
 
+# ── TEAM VOTE REQUESTS ────────────────────────────────
+from utils.supabase_client import (
+    get_pending_votes_for_user,
+    cast_vote
+)
+
+if user:
+    pending_votes = get_pending_votes_for_user(user.id)
+
+    if pending_votes:
+        st.markdown(
+            "<div class='hm-label' "
+            "style='margin-bottom:0.8rem;'>"
+            "Team Vote Requests</div>",
+            unsafe_allow_html=True
+        )
+
+        for vote in pending_votes:
+            inv = vote.get("team_invitations", {})
+            invitee_name = inv.get("invitee_name", "Someone")
+            proposed_by = inv.get("proposed_by_name", "A teammate")
+            invitation_id = vote.get("invitation_id")
+            vote_id = vote.get("id")
+            invitee_id = inv.get("invitee_id")
+
+            st.markdown(
+                f"<div style='background:#111113;"
+                f"border:1px solid #1c1c1f;"
+                f"border-radius:14px;padding:1.2rem 1.4rem;"
+                f"margin-bottom:0.8rem;'>"
+                f"<div style='font-size:0.68rem;font-weight:500;"
+                f"letter-spacing:0.1em;text-transform:uppercase;"
+                f"color:#3f3f46;margin-bottom:0.5rem;'>"
+                f"Team Vote Required</div>"
+                f"<div style='font-family:Playfair Display,serif;"
+                f"font-size:0.95rem;color:#f4f4f5;"
+                f"margin-bottom:0.3rem;'>"
+                f"{proposed_by} wants to add "
+                f"{invitee_name}</div>"
+                f"<div style='font-size:0.78rem;color:#71717a;"
+                f"font-style:italic;font-weight:300;'>"
+                f"Vote to approve or reject this new "
+                f"team member.</div>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
+
+            vc1, vc2, vc3 = st.columns([2, 1, 1])
+
+            with vc2:
+                if st.button(
+                    "Approve",
+                    key=f"approve_vote_{vote_id}",
+                    use_container_width=True
+                ):
+                    my_name = profile.get(
+                        "full_name", "User"
+                    )
+                    result = cast_vote(
+                        vote_id=vote_id,
+                        invitation_id=invitation_id,
+                        vote_value="accepted",
+                        voter_id=user.id,
+                        voter_name=my_name,
+                        invitee_id=invitee_id,
+                        invitee_name=invitee_name
+                    )
+
+                    if result == "approved":
+                        st.success(
+                            f"All approved! "
+                            f"{invitee_name} is now "
+                            f"part of your team!"
+                        )
+                    elif result == "vote_recorded":
+                        st.success(
+                            "Your vote recorded. "
+                            "Waiting for other teammates."
+                        )
+                    st.rerun()
+
+            with vc3:
+                if st.button(
+                    "Reject",
+                    key=f"reject_vote_{vote_id}",
+                    use_container_width=True
+                ):
+                    my_name = profile.get(
+                        "full_name", "User"
+                    )
+                    cast_vote(
+                        vote_id=vote_id,
+                        invitation_id=invitation_id,
+                        vote_value="rejected",
+                        voter_id=user.id,
+                        voter_name=my_name,
+                        invitee_id=invitee_id,
+                        invitee_name=invitee_name
+                    )
+                    st.info(
+                        f"{invitee_name} was not added."
+                    )
+                    st.rerun()
+
+        st.markdown("<hr>", unsafe_allow_html=True)
+
 # ── INCOMING REQUESTS ─────────────────────────────────
 from utils.supabase_client import get_my_requests, update_request_status
 

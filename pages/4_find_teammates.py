@@ -3,10 +3,14 @@ from dotenv import load_dotenv
 import os, sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.ai_helper import calculate_compatibility, get_ai_recommendations
+from utils.ai_helper import calculate_compatibility
 from utils.auth import check_session
 from utils.styles import load_css
-from utils.supabase_client import send_request, parse_list_field
+from utils.supabase_client import (
+    get_all_profiles, get_team_members,
+    propose_team_member, get_invitation_status,
+    parse_list_field
+)
 
 load_dotenv()
 
@@ -22,11 +26,6 @@ st.markdown(load_css(), unsafe_allow_html=True)
 check_session()
 if "user" not in st.session_state or not st.session_state.user:
     st.switch_page("pages/2_login.py")
-
-# ── LOAD REAL PROFILES FROM DATABASE ──────────────────
-from utils.supabase_client import (
-    get_all_profiles, send_request, parse_list_field
-)
 
 user = st.session_state.get("user")
 user_profile = st.session_state.get("profile", {})
@@ -45,12 +44,15 @@ user_profile["goals"] = parse_list_field(
     user_profile.get("goals", [])
 )
 
-# Load all real profiles except current user
+# ── LOAD REAL TEAM MEMBERS ────────────────────────────
+real_members = get_team_members(user.id) if user else []
+member_ids = [m["id"] for m in real_members]
+
+# ── LOAD ALL PROFILES ─────────────────────────────────
 real_profiles = get_all_profiles(
     exclude_user_id=user.id if user else None
 )
 
-# Add sample profiles as fallback if no real users yet
 sample_profiles = [
     {
         "id": "sample-001",
@@ -89,27 +91,7 @@ sample_profiles = [
     },
 ]
 
-# Merge — real profiles first, then samples
 all_profiles = real_profiles if real_profiles else sample_profiles
-
-# Show source indicator
-if real_profiles:
-    st.markdown(
-        f"<div style='font-size:0.75rem;color:#34d399;"
-        f"margin-bottom:1rem;'>"
-        f"{len(real_profiles)} real developer"
-        f"{'s' if len(real_profiles) != 1 else ''} "
-        f"on HackMate</div>",
-        unsafe_allow_html=True
-    )
-else:
-    st.markdown(
-        "<div style='font-size:0.75rem;color:#52525b;"
-        "margin-bottom:1rem;'>"
-        "Showing sample profiles — invite friends to join "
-        "HackMate to see real matches.</div>",
-        unsafe_allow_html=True
-    )
 
 # ── NAV ───────────────────────────────────────────────
 st.markdown(
@@ -136,28 +118,29 @@ st.markdown(
     "<div class='hm-title'>Find Teammates</div>"
     "<div style='font-size:0.85rem;color:#52525b;"
     "margin-top:0.5rem;font-weight:300;'>"
-    "Check compatibility and send connection requests."
+    "Check compatibility and invite developers to your team."
     "</div></div>",
     unsafe_allow_html=True
 )
 
-# ── USER PROFILE ──────────────────────────────────────
-user_profile = st.session_state.get("profile", {})
-user = st.session_state.get("user")
-
-if not user_profile:
-    st.warning("Complete your profile first.")
-    if st.button("Set Up Profile"):
-        st.switch_page("pages/3_profile_setup.py")
-    st.stop()
-
-# Fix list fields
-user_profile["skills"] = parse_list_field(
-    user_profile.get("skills", [])
-)
-user_profile["goals"] = parse_list_field(
-    user_profile.get("goals", [])
-)
+# ── SOURCE INDICATOR ──────────────────────────────────
+if real_profiles:
+    st.markdown(
+        f"<div style='font-size:0.75rem;color:#34d399;"
+        f"margin-bottom:1rem;'>"
+        f"{len(real_profiles)} real developer"
+        f"{'s' if len(real_profiles) != 1 else ''} "
+        f"on HackMate</div>",
+        unsafe_allow_html=True
+    )
+else:
+    st.markdown(
+        "<div style='font-size:0.75rem;color:#52525b;"
+        "margin-bottom:1rem;'>"
+        "Showing sample profiles — invite friends to "
+        "join HackMate to see real matches.</div>",
+        unsafe_allow_html=True
+    )
 
 # ── FILTERS ───────────────────────────────────────────
 st.markdown(
@@ -169,8 +152,8 @@ sc1, sc2, sc3 = st.columns(3)
 
 with sc1:
     search_name = st.text_input(
-        "Search by name",
-        placeholder="e.g. Arjun",
+        "Search",
+        placeholder="Search by name...",
         label_visibility="collapsed"
     )
 
@@ -186,7 +169,7 @@ with sc3:
         options=["1-2 hrs", "3-5 hrs", "6-8 hrs", "Full time"]
     )
 
-# Apply all filters
+# Apply filters
 filtered = all_profiles
 
 if search_name:
@@ -195,13 +178,11 @@ if search_name:
         if search_name.lower() in
         p.get("full_name", "").lower()
     ]
-
 if filter_exp:
     filtered = [
         p for p in filtered
         if p["experience_level"] in filter_exp
     ]
-
 if filter_avail:
     filtered = [
         p for p in filtered
@@ -226,7 +207,16 @@ for profile in filtered:
         for s in profile["skills"]
     ])
 
-    # ── CARD HEADER ───────────────────────────────────
+    # Check relationship status
+    already_in_team = profile["id"] in member_ids
+
+    existing_inv = get_invitation_status(
+        user.id, profile["id"]
+    ) if user and profile["id"] != "sample-001" \
+        and profile["id"] != "sample-002" \
+        and profile["id"] != "sample-003" else None
+
+    # ── CARD ──────────────────────────────────────────
     col1, col2, col3 = st.columns([3, 1, 1])
 
     with col1:
@@ -240,7 +230,7 @@ for profile in filtered:
             f"{profile['availability']}/day</div>"
             f"<div style='font-size:0.82rem;color:#71717a;"
             f"font-style:italic;margin-bottom:0.6rem;'>"
-            f"{profile['bio']}</div>"
+            f"{profile.get('bio', '')}</div>"
             f"<div>{skill_tags}</div>",
             unsafe_allow_html=True
         )
@@ -253,11 +243,30 @@ for profile in filtered:
         )
 
     with col3:
-        connect = st.button(
-            "Connect",
-            key=f"connect_{safe_key}",
-            use_container_width=True
-        )
+        if already_in_team:
+            st.markdown(
+                "<div style='font-size:0.72rem;color:#34d399;"
+                "padding:0.6rem 0;text-align:center;"
+                "letter-spacing:0.05em;'>In Your Team</div>",
+                unsafe_allow_html=True
+            )
+        elif existing_inv:
+            st.markdown(
+                "<div style='font-size:0.72rem;color:#a1a1aa;"
+                "padding:0.6rem 0;text-align:center;"
+                "letter-spacing:0.05em;'>Vote Pending</div>",
+                unsafe_allow_html=True
+            )
+        else:
+            invite = st.button(
+                "Invite to Team",
+                key=f"connect_{safe_key}",
+                use_container_width=True
+            )
+            if invite:
+                st.session_state[
+                    f"show_msg_{safe_key}"
+                ] = True
 
     # ── COMPATIBILITY RESULT ──────────────────────────
     if check:
@@ -283,12 +292,13 @@ for profile in filtered:
                     f"border:1px solid #1c1c1f;"
                     f"border-radius:14px;padding:1.4rem;"
                     f"margin-top:0.8rem;'>"
-                    f"<div style='display:flex;align-items:center;"
-                    f"gap:1rem;margin-bottom:1rem;'>"
+                    f"<div style='display:flex;"
+                    f"align-items:center;gap:1rem;"
+                    f"margin-bottom:1rem;'>"
                     f"<span class='hm-score {score_class}'>"
                     f"{score}% Match</span>"
-                    f"<span style='font-size:0.85rem;color:#71717a;"
-                    f"font-style:italic;'>"
+                    f"<span style='font-size:0.85rem;"
+                    f"color:#71717a;font-style:italic;'>"
                     f"{result.get('summary','')}</span>"
                     f"</div>",
                     unsafe_allow_html=True
@@ -298,35 +308,43 @@ for profile in filtered:
 
                 with r1:
                     st.markdown(
-                        "<div style='font-size:0.7rem;font-weight:500;"
-                        "letter-spacing:0.1em;text-transform:uppercase;"
-                        "color:#3f3f46;margin-bottom:0.5rem;'>"
+                        "<div style='font-size:0.7rem;"
+                        "font-weight:500;letter-spacing:0.1em;"
+                        "text-transform:uppercase;color:#3f3f46;"
+                        "margin-bottom:0.5rem;'>"
                         "Why you match</div>",
                         unsafe_allow_html=True
                     )
                     for s in result.get("strengths", []):
                         st.markdown(
-                            f"<div class='hm-strength'>{s}</div>",
+                            f"<div class='hm-strength'>"
+                            f"{s}</div>",
                             unsafe_allow_html=True
                         )
 
                 with r2:
                     st.markdown(
-                        "<div style='font-size:0.7rem;font-weight:500;"
-                        "letter-spacing:0.1em;text-transform:uppercase;"
-                        "color:#3f3f46;margin-bottom:0.5rem;'>"
+                        "<div style='font-size:0.7rem;"
+                        "font-weight:500;letter-spacing:0.1em;"
+                        "text-transform:uppercase;color:#3f3f46;"
+                        "margin-bottom:0.5rem;'>"
                         "Suggested Roles</div>",
                         unsafe_allow_html=True
                     )
-                    roles = result.get("recommended_roles", {})
-                    user_name = user_profile.get("full_name", "You")
+                    roles = result.get(
+                        "recommended_roles", {}
+                    )
+                    user_name = user_profile.get(
+                        "full_name", "You"
+                    )
                     st.markdown(
                         f"<div style='margin-bottom:0.5rem;'>"
-                        f"<span class='hm-tag'>{user_name}</span>"
+                        f"<span class='hm-tag'>"
+                        f"{user_name}</span>"
                         f"<span style='font-size:0.82rem;"
                         f"color:#71717a;'>"
-                        f"{roles.get('user','Developer')}</span>"
-                        f"</div>"
+                        f"{roles.get('user','Developer')}"
+                        f"</span></div>"
                         f"<div>"
                         f"<span class='hm-tag'>"
                         f"{profile['full_name']}</span>"
@@ -340,8 +358,10 @@ for profile in filtered:
                     if result.get("potential_challenges"):
                         st.markdown(
                             "<div style='font-size:0.7rem;"
-                            "font-weight:500;letter-spacing:0.1em;"
-                            "text-transform:uppercase;color:#3f3f46;"
+                            "font-weight:500;"
+                            "letter-spacing:0.1em;"
+                            "text-transform:uppercase;"
+                            "color:#3f3f46;"
                             "margin:0.8rem 0 0.4rem;'>"
                             "Challenge</div>"
                             f"<div style='font-size:0.8rem;"
@@ -352,74 +372,78 @@ for profile in filtered:
                             unsafe_allow_html=True
                         )
 
-                st.markdown("</div>", unsafe_allow_html=True)
+                st.markdown(
+                    "</div>",
+                    unsafe_allow_html=True
+                )
 
             except Exception as e:
                 st.error(f"Could not calculate: {e}")
 
-    # ── CONNECT FLOW ──────────────────────────────────
-    if connect:
-        # Show message input
-        st.session_state[f"show_msg_{safe_key}"] = True
-
+    # ── INVITE FLOW ───────────────────────────────────
     if st.session_state.get(f"show_msg_{safe_key}"):
         st.markdown(
-            "<div style='background:#111113;border:1px solid #1c1c1f;"
-            "border-radius:14px;padding:1.4rem;margin-top:0.8rem;'>"
+            "<div style='background:#111113;"
+            "border:1px solid #1c1c1f;"
+            "border-radius:14px;padding:1.4rem;"
+            "margin-top:0.8rem;'>"
             "<div style='font-size:0.7rem;font-weight:500;"
             "letter-spacing:0.1em;text-transform:uppercase;"
-            "color:#3f3f46;margin-bottom:0.8rem;'>"
-            f"Send request to {profile['full_name']}</div>",
+            "color:#3f3f46;margin-bottom:0.5rem;'>"
+            f"Invite {profile['full_name']} to your team"
+            "</div>"
+            "<div style='font-size:0.8rem;color:#71717a;"
+            "font-style:italic;margin-bottom:1rem;"
+            "font-weight:300;'>"
+            "If you already have teammates, they will each "
+            "receive a vote request. All must approve before "
+            f"{profile['full_name'].split()[0]} joins."
+            "</div>",
             unsafe_allow_html=True
-        )
-
-        msg = st.text_area(
-            "Add a message (optional)",
-            placeholder=(
-                f"Hi {profile['full_name'].split()[0]}, "
-                f"I checked our compatibility and think we'd "
-                f"make a great team! I bring "
-                f"{', '.join(user_profile.get('skills', [])[:2])} "
-                f"skills. Would you like to team up?"
-            ),
-            key=f"msg_{safe_key}",
-            height=100,
-            label_visibility="collapsed"
         )
 
         send_col1, send_col2, _ = st.columns([1, 1, 2])
 
         with send_col1:
             if st.button(
-                "Send Request",
+                "Send Invite",
                 key=f"send_{safe_key}",
                 use_container_width=True
             ):
                 from_name = user_profile.get(
                     "full_name", "A HackMate user"
                 )
-                status = send_request(
-                    from_user_id=user.id,
-                    to_user_id=profile["id"],
-                    from_name=from_name,
-                    message=msg
-                )
+                with st.spinner("Sending invite..."):
+                    status = propose_team_member(
+                        invitee_id=profile["id"],
+                        invitee_name=profile["full_name"],
+                        proposed_by_id=user.id,
+                        proposed_by_name=from_name
+                    )
 
-                if status == "sent":
+                if status == "added_directly":
                     st.success(
-                        f"Request sent to "
-                        f"{profile['full_name']}!"
+                        f"{profile['full_name']} added "
+                        f"to your team!"
                     )
                     st.session_state[
                         f"show_msg_{safe_key}"
                     ] = False
-                elif status == "already_sent":
-                    st.warning(
-                        "You already sent a request "
-                        "to this person."
+                    st.rerun()
+
+                elif status == "voting_started":
+                    st.success(
+                        f"Vote request sent to your "
+                        f"teammates! All must approve "
+                        f"{profile['full_name'].split()[0]}."
                     )
+                    st.session_state[
+                        f"show_msg_{safe_key}"
+                    ] = False
+                    st.rerun()
+
                 else:
-                    st.error("Could not send request.")
+                    st.error("Could not send invite.")
 
         with send_col2:
             if st.button(
