@@ -6,7 +6,12 @@ from datetime import datetime
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.auth import check_session
 from utils.styles import load_css
-from utils.supabase_client import get_team_members, parse_list_field
+from utils.supabase_client import (
+    get_team_members,
+    get_pending_votes_for_user,
+    cast_vote,
+    parse_list_field
+)
 
 load_dotenv()
 
@@ -31,7 +36,7 @@ user = st.session_state.get("user")
 real_members = get_team_members(user.id) if user else []
 member_names = [name] + [m["name"] for m in real_members]
 
-# ── INIT CLEAN SESSION DATA ───────────────────────────
+# ── INIT SESSION DATA ─────────────────────────────────
 if "tasks" not in st.session_state:
     st.session_state.tasks = {
         "todo": [],
@@ -76,37 +81,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ── PENDING VOTES ─────────────────────────────────────
-from utils.supabase_client import get_pending_votes_for_user
-
-pending_votes = get_pending_votes_for_user(user.id) \
-    if user else []
-
-if pending_votes:
-    st.markdown(
-        "<div style='background:#111113;"
-        "border:1px solid #27272a;"
-        "border-radius:12px;padding:1rem 1.2rem;"
-        "margin-bottom:1.5rem;'>"
-        "<div class='hm-label' style='margin-bottom:0.4rem;'>"
-        "Pending Team Votes</div>",
-        unsafe_allow_html=True
-    )
-    for v in pending_votes:
-        inv = v.get("team_invitations", {})
-        st.markdown(
-            f"<div style='font-size:0.82rem;color:#a1a1aa;"
-            f"font-weight:300;'>"
-            f"Vote pending for "
-            f"<span style='color:#f4f4f5;"
-            f"font-family:Playfair Display,serif;'>"
-            f"{inv.get('invitee_name', 'someone')}"
-            f"</span> — check Dashboard to vote."
-            f"</div>",
-            unsafe_allow_html=True
-        )
-    st.markdown("</div>", unsafe_allow_html=True)
-
 members_html = "".join([
     f"<span style='display:inline-flex;align-items:center;"
     f"gap:6px;background:#111113;border:1px solid #1c1c1f;"
@@ -128,6 +102,120 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# ── INVITE NEW MEMBER BUTTON ──────────────────────────
+st.markdown(
+    "<div class='hm-label' style='margin-bottom:0.6rem;'>"
+    "Invite New Member</div>",
+    unsafe_allow_html=True
+)
+
+if st.button(
+    "Find & Invite Teammates →",
+    use_container_width=False
+):
+    st.switch_page("pages/4_find_teammates.py")
+
+st.markdown(
+    "<div style='font-size:0.78rem;color:#3f3f46;"
+    "font-weight:300;margin-top:0.4rem;"
+    "margin-bottom:1.5rem;'>"
+    "Browse real profiles, check compatibility "
+    "and invite compatible teammates.</div>",
+    unsafe_allow_html=True
+)
+
+# ── PENDING TEAM VOTES ────────────────────────────────
+pending_votes = get_pending_votes_for_user(user.id) \
+    if user else []
+
+if pending_votes:
+    st.markdown(
+        "<div class='hm-label' style='margin-bottom:0.8rem;'>"
+        "Team Vote Requests</div>",
+        unsafe_allow_html=True
+    )
+
+    for vote in pending_votes:
+        inv = vote.get("team_invitations", {})
+        if not inv:
+            continue
+
+        invitee_name = inv.get("invitee_name", "Someone")
+        proposed_by = inv.get("proposed_by_name", "A teammate")
+        invitation_id = vote.get("invitation_id")
+        vote_id = vote.get("id")
+        invitee_id = inv.get("invitee_id")
+
+        st.markdown(
+            f"<div style='background:#111113;"
+            f"border:1px solid #27272a;"
+            f"border-radius:14px;padding:1.2rem 1.4rem;"
+            f"margin-bottom:0.8rem;'>"
+            f"<div style='font-size:0.68rem;font-weight:500;"
+            f"letter-spacing:0.1em;text-transform:uppercase;"
+            f"color:#3f3f46;margin-bottom:0.5rem;'>"
+            f"Team Vote Required</div>"
+            f"<div style='font-family:Playfair Display,serif;"
+            f"font-size:0.95rem;color:#f4f4f5;"
+            f"margin-bottom:0.3rem;'>"
+            f"{proposed_by} wants to add "
+            f"{invitee_name}</div>"
+            f"<div style='font-size:0.78rem;color:#71717a;"
+            f"font-style:italic;font-weight:300;'>"
+            f"Vote to approve or reject this new team member."
+            f"</div></div>",
+            unsafe_allow_html=True
+        )
+
+        vc1, vc2, vc3 = st.columns([2, 1, 1])
+
+        with vc2:
+            if st.button(
+                "Approve",
+                key=f"ws_approve_{vote_id}",
+                use_container_width=True
+            ):
+                result = cast_vote(
+                    vote_id=vote_id,
+                    invitation_id=invitation_id,
+                    vote_value="accepted",
+                    voter_id=user.id,
+                    voter_name=name,
+                    invitee_id=invitee_id,
+                    invitee_name=invitee_name
+                )
+                if result == "approved":
+                    st.success(
+                        f"{invitee_name} joined "
+                        f"your team!"
+                    )
+                else:
+                    st.success(
+                        "Vote recorded. Waiting "
+                        "for other teammates."
+                    )
+                st.rerun()
+
+        with vc3:
+            if st.button(
+                "Reject",
+                key=f"ws_reject_{vote_id}",
+                use_container_width=True
+            ):
+                cast_vote(
+                    vote_id=vote_id,
+                    invitation_id=invitation_id,
+                    vote_value="rejected",
+                    voter_id=user.id,
+                    voter_name=name,
+                    invitee_id=invitee_id,
+                    invitee_name=invitee_name
+                )
+                st.info(f"{invitee_name} was not added.")
+                st.rerun()
+
+    st.markdown("<hr>", unsafe_allow_html=True)
+
 # ── PROGRESS BAR ──────────────────────────────────────
 total = sum(len(v) for v in st.session_state.tasks.values())
 done_count = len(st.session_state.tasks["done"])
@@ -143,6 +231,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 st.progress(progress)
+
 st.markdown(
     "<div style='height:1.5rem'></div>",
     unsafe_allow_html=True
@@ -177,8 +266,11 @@ with left:
             options=member_names,
             key="task_assignee"
         )
-        if st.button("Add Task", key="add_task_btn",
-                     use_container_width=True):
+        if st.button(
+            "Add Task",
+            key="add_task_btn",
+            use_container_width=True
+        ):
             if new_task.strip():
                 st.session_state.tasks["todo"].append({
                     "text": new_task.strip(),
@@ -210,9 +302,11 @@ with left:
             unsafe_allow_html=True
         )
 
-    for i, task in enumerate(st.session_state.tasks["todo"]):
-        task_text = task["text"] if isinstance(task, dict) \
-            else task
+    for i, task in enumerate(
+        st.session_state.tasks["todo"]
+    ):
+        task_text = task["text"] \
+            if isinstance(task, dict) else task
         assigned = task.get("assigned", "") \
             if isinstance(task, dict) else ""
 
@@ -233,10 +327,10 @@ with left:
                 key=f"todo_{i}",
                 help="Move to In Progress"
             ):
-                task_item = st.session_state\
+                item = st.session_state\
                     .tasks["todo"].pop(i)
-                st.session_state.tasks["in_progress"]\
-                    .append(task_item)
+                st.session_state\
+                    .tasks["in_progress"].append(item)
                 st.rerun()
 
     st.markdown(
@@ -248,7 +342,8 @@ with left:
     st.markdown(
         "<div style='font-size:0.68rem;font-weight:500;"
         "letter-spacing:0.1em;text-transform:uppercase;"
-        "color:#a1a1aa;margin-bottom:0.6rem;'>In Progress</div>",
+        "color:#a1a1aa;margin-bottom:0.6rem;'>"
+        "In Progress</div>",
         unsafe_allow_html=True
     )
 
@@ -263,8 +358,8 @@ with left:
     for i, task in enumerate(
         st.session_state.tasks["in_progress"]
     ):
-        task_text = task["text"] if isinstance(task, dict) \
-            else task
+        task_text = task["text"] \
+            if isinstance(task, dict) else task
         assigned = task.get("assigned", "") \
             if isinstance(task, dict) else ""
 
@@ -285,10 +380,10 @@ with left:
                 key=f"prog_{i}",
                 help="Mark as Done"
             ):
-                task_item = st.session_state\
+                item = st.session_state\
                     .tasks["in_progress"].pop(i)
-                st.session_state.tasks["done"]\
-                    .append(task_item)
+                st.session_state\
+                    .tasks["done"].append(item)
                 st.rerun()
 
     st.markdown(
@@ -313,8 +408,8 @@ with left:
         )
 
     for task in st.session_state.tasks["done"]:
-        task_text = task["text"] if isinstance(task, dict) \
-            else task
+        task_text = task["text"] \
+            if isinstance(task, dict) else task
         assigned = task.get("assigned", "") \
             if isinstance(task, dict) else ""
         st.markdown(
@@ -337,21 +432,19 @@ with right:
         unsafe_allow_html=True
     )
 
-    # Empty state
     if not st.session_state.messages:
         st.markdown(
             "<div style='background:#111113;"
-            "border:1px solid #1c1c1f;border-radius:12px;"
-            "padding:2rem;text-align:center;"
-            "margin-bottom:1rem;'>"
+            "border:1px solid #1c1c1f;"
+            "border-radius:12px;padding:2rem;"
+            "text-align:center;margin-bottom:1rem;'>"
             "<div style='font-size:0.85rem;color:#3f3f46;"
             "font-style:italic;font-weight:300;'>"
-            "No messages yet. Say hello to your team.</div>"
-            "</div>",
+            "No messages yet. Say hello to your team."
+            "</div></div>",
             unsafe_allow_html=True
         )
 
-    # Messages
     for msg in st.session_state.messages:
         if msg["is_me"]:
             st.markdown(
@@ -375,7 +468,6 @@ with right:
         unsafe_allow_html=True
     )
 
-    # Send message
     msg_input = st.text_input(
         "Message",
         placeholder="Say something to your team...",

@@ -7,8 +7,10 @@ from utils.ai_helper import calculate_compatibility
 from utils.auth import check_session
 from utils.styles import load_css
 from utils.supabase_client import (
-    get_all_profiles, get_team_members,
-    propose_team_member, get_invitation_status,
+    get_all_profiles,
+    get_team_members,
+    send_team_invite,
+    get_invitation_status,
     parse_list_field
 )
 
@@ -91,7 +93,8 @@ sample_profiles = [
     },
 ]
 
-all_profiles = real_profiles if real_profiles else sample_profiles
+all_profiles = real_profiles if real_profiles \
+    else sample_profiles
 
 # ── NAV ───────────────────────────────────────────────
 st.markdown(
@@ -118,7 +121,8 @@ st.markdown(
     "<div class='hm-title'>Find Teammates</div>"
     "<div style='font-size:0.85rem;color:#52525b;"
     "margin-top:0.5rem;font-weight:300;'>"
-    "Check compatibility and invite developers to your team."
+    "Check compatibility and invite developers "
+    "to your team."
     "</div></div>",
     unsafe_allow_html=True
 )
@@ -137,8 +141,8 @@ else:
     st.markdown(
         "<div style='font-size:0.75rem;color:#52525b;"
         "margin-bottom:1rem;'>"
-        "Showing sample profiles — invite friends to "
-        "join HackMate to see real matches.</div>",
+        "Showing sample profiles — invite friends "
+        "to join HackMate to see real matches.</div>",
         unsafe_allow_html=True
     )
 
@@ -201,6 +205,7 @@ st.markdown("<hr>", unsafe_allow_html=True)
 # ── CANDIDATE CARDS ───────────────────────────────────
 for profile in filtered:
     safe_key = profile["full_name"].replace(" ", "_")
+    is_sample = str(profile["id"]).startswith("sample-")
 
     skill_tags = "".join([
         f"<span class='hm-tag'>{s}</span>"
@@ -212,20 +217,20 @@ for profile in filtered:
 
     existing_inv = get_invitation_status(
         user.id, profile["id"]
-    ) if user and profile["id"] != "sample-001" \
-        and profile["id"] != "sample-002" \
-        and profile["id"] != "sample-003" else None
+    ) if user and not is_sample else None
 
     # ── CARD ──────────────────────────────────────────
     col1, col2, col3 = st.columns([3, 1, 1])
 
     with col1:
         st.markdown(
-            f"<div style='font-family:Playfair Display,serif;"
-            f"font-size:1.05rem;font-weight:500;color:#f4f4f5;"
-            f"margin-bottom:2px;'>{profile['full_name']}</div>"
-            f"<div style='font-size:0.75rem;color:#52525b;"
-            f"margin-bottom:0.5rem;'>"
+            f"<div style='font-family:"
+            f"Playfair Display,serif;"
+            f"font-size:1.05rem;font-weight:500;"
+            f"color:#f4f4f5;margin-bottom:2px;'>"
+            f"{profile['full_name']}</div>"
+            f"<div style='font-size:0.75rem;"
+            f"color:#52525b;margin-bottom:0.5rem;'>"
             f"{profile['experience_level']} · "
             f"{profile['availability']}/day</div>"
             f"<div style='font-size:0.82rem;color:#71717a;"
@@ -245,16 +250,33 @@ for profile in filtered:
     with col3:
         if already_in_team:
             st.markdown(
-                "<div style='font-size:0.72rem;color:#34d399;"
-                "padding:0.6rem 0;text-align:center;"
-                "letter-spacing:0.05em;'>In Your Team</div>",
+                "<div style='font-size:0.72rem;"
+                "color:#34d399;padding:0.6rem 0;"
+                "text-align:center;"
+                "letter-spacing:0.05em;'>"
+                "In Your Team</div>",
                 unsafe_allow_html=True
             )
         elif existing_inv:
+            status_text = "Invite Sent" \
+                if existing_inv.get("status") == \
+                "pending_acceptance" \
+                else "Vote Pending"
             st.markdown(
-                "<div style='font-size:0.72rem;color:#a1a1aa;"
-                "padding:0.6rem 0;text-align:center;"
-                "letter-spacing:0.05em;'>Vote Pending</div>",
+                f"<div style='font-size:0.72rem;"
+                f"color:#a1a1aa;padding:0.6rem 0;"
+                f"text-align:center;"
+                f"letter-spacing:0.05em;'>"
+                f"{status_text}</div>",
+                unsafe_allow_html=True
+            )
+        elif is_sample:
+            st.markdown(
+                "<div style='font-size:0.72rem;"
+                "color:#3f3f46;padding:0.6rem 0;"
+                "text-align:center;"
+                "letter-spacing:0.05em;'>"
+                "Sample Profile</div>",
                 unsafe_allow_html=True
             )
         else:
@@ -299,8 +321,8 @@ for profile in filtered:
                     f"{score}% Match</span>"
                     f"<span style='font-size:0.85rem;"
                     f"color:#71717a;font-style:italic;'>"
-                    f"{result.get('summary','')}</span>"
-                    f"</div>",
+                    f"{result.get('summary', '')}"
+                    f"</span></div>",
                     unsafe_allow_html=True
                 )
 
@@ -309,8 +331,10 @@ for profile in filtered:
                 with r1:
                     st.markdown(
                         "<div style='font-size:0.7rem;"
-                        "font-weight:500;letter-spacing:0.1em;"
-                        "text-transform:uppercase;color:#3f3f46;"
+                        "font-weight:500;"
+                        "letter-spacing:0.1em;"
+                        "text-transform:uppercase;"
+                        "color:#3f3f46;"
                         "margin-bottom:0.5rem;'>"
                         "Why you match</div>",
                         unsafe_allow_html=True
@@ -325,8 +349,10 @@ for profile in filtered:
                 with r2:
                     st.markdown(
                         "<div style='font-size:0.7rem;"
-                        "font-weight:500;letter-spacing:0.1em;"
-                        "text-transform:uppercase;color:#3f3f46;"
+                        "font-weight:500;"
+                        "letter-spacing:0.1em;"
+                        "text-transform:uppercase;"
+                        "color:#3f3f46;"
                         "margin-bottom:0.5rem;'>"
                         "Suggested Roles</div>",
                         unsafe_allow_html=True
@@ -334,23 +360,24 @@ for profile in filtered:
                     roles = result.get(
                         "recommended_roles", {}
                     )
-                    user_name = user_profile.get(
+                    uname = user_profile.get(
                         "full_name", "You"
                     )
                     st.markdown(
-                        f"<div style='margin-bottom:0.5rem;'>"
+                        f"<div style='margin-bottom:"
+                        f"0.5rem;'>"
                         f"<span class='hm-tag'>"
-                        f"{user_name}</span>"
+                        f"{uname}</span>"
                         f"<span style='font-size:0.82rem;"
                         f"color:#71717a;'>"
-                        f"{roles.get('user','Developer')}"
+                        f"{roles.get('user', 'Developer')}"
                         f"</span></div>"
                         f"<div>"
                         f"<span class='hm-tag'>"
                         f"{profile['full_name']}</span>"
                         f"<span style='font-size:0.82rem;"
                         f"color:#71717a;'>"
-                        f"{roles.get('candidate','Developer')}"
+                        f"{roles.get('candidate', 'Developer')}"
                         f"</span></div>",
                         unsafe_allow_html=True
                     )
@@ -365,7 +392,8 @@ for profile in filtered:
                             "margin:0.8rem 0 0.4rem;'>"
                             "Challenge</div>"
                             f"<div style='font-size:0.8rem;"
-                            f"color:#52525b;font-style:italic;"
+                            f"color:#52525b;"
+                            f"font-style:italic;"
                             f"font-weight:300;'>"
                             f"{result['potential_challenges']}"
                             f"</div>",
@@ -382,23 +410,31 @@ for profile in filtered:
 
     # ── INVITE FLOW ───────────────────────────────────
     if st.session_state.get(f"show_msg_{safe_key}"):
+
+        team_note = (
+            "Your existing teammates will each receive "
+            "a vote request. All must approve before "
+            f"{profile['full_name'].split()[0]} joins."
+        ) if real_members else (
+            "Since you have no other teammates yet, "
+            f"{profile['full_name'].split()[0]} will "
+            f"join your team directly once they accept."
+        )
+
         st.markdown(
             "<div style='background:#111113;"
             "border:1px solid #1c1c1f;"
             "border-radius:14px;padding:1.4rem;"
             "margin-top:0.8rem;'>"
-            "<div style='font-size:0.7rem;font-weight:500;"
-            "letter-spacing:0.1em;text-transform:uppercase;"
-            "color:#3f3f46;margin-bottom:0.5rem;'>"
+            "<div style='font-size:0.7rem;"
+            "font-weight:500;letter-spacing:0.1em;"
+            "text-transform:uppercase;color:#3f3f46;"
+            "margin-bottom:0.5rem;'>"
             f"Invite {profile['full_name']} to your team"
             "</div>"
-            "<div style='font-size:0.8rem;color:#71717a;"
-            "font-style:italic;margin-bottom:1rem;"
-            "font-weight:300;'>"
-            "If you already have teammates, they will each "
-            "receive a vote request. All must approve before "
-            f"{profile['full_name'].split()[0]} joins."
-            "</div>",
+            f"<div style='font-size:0.8rem;color:#71717a;"
+            f"font-style:italic;margin-bottom:1rem;"
+            f"font-weight:300;'>{team_note}</div>",
             unsafe_allow_html=True
         )
 
@@ -414,33 +450,50 @@ for profile in filtered:
                     "full_name", "A HackMate user"
                 )
                 with st.spinner("Sending invite..."):
-                    status = propose_team_member(
+                    status = send_team_invite(
+                        proposer_id=user.id,
+                        proposer_name=from_name,
                         invitee_id=profile["id"],
-                        invitee_name=profile["full_name"],
-                        proposed_by_id=user.id,
-                        proposed_by_name=from_name
+                        invitee_name=profile["full_name"]
                     )
 
-                if status == "added_directly":
+                if status == "invite_sent":
                     st.success(
-                        f"{profile['full_name']} added "
-                        f"to your team!"
+                        f"Invite sent to "
+                        f"{profile['full_name']}! "
+                        f"Waiting for them to accept."
                     )
                     st.session_state[
                         f"show_msg_{safe_key}"
                     ] = False
                     st.rerun()
 
-                elif status == "voting_started":
+                elif status == "approved_directly":
                     st.success(
-                        f"Vote request sent to your "
-                        f"teammates! All must approve "
-                        f"{profile['full_name'].split()[0]}."
+                        f"{profile['full_name']} "
+                        f"added to your team!"
                     )
                     st.session_state[
                         f"show_msg_{safe_key}"
                     ] = False
                     st.rerun()
+
+                elif status == "already_invited":
+                    st.warning(
+                        "Already invited this person."
+                    )
+                    st.session_state[
+                        f"show_msg_{safe_key}"
+                    ] = False
+
+                elif status == "sample_profile":
+                    st.warning(
+                        "Can't invite sample profiles. "
+                        "Invite real developers!"
+                    )
+                    st.session_state[
+                        f"show_msg_{safe_key}"
+                    ] = False
 
                 else:
                     st.error("Could not send invite.")

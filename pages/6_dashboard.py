@@ -348,6 +348,202 @@ if user:
 
         st.markdown("<hr>", unsafe_allow_html=True)
 
+# ── INCOMING TEAM INVITES (for invitee) ───────────────
+from utils.supabase_client import (
+    get_incoming_invites,
+    respond_to_invite,
+    get_pending_votes_for_user,
+    cast_vote
+)
+
+if user:
+    incoming = get_incoming_invites(user.id)
+
+    if incoming:
+        st.markdown(
+            "<div class='hm-label' "
+            "style='margin-bottom:0.8rem;'>"
+            "Team Invitations</div>",
+            unsafe_allow_html=True
+        )
+
+        for inv in incoming:
+            proposer = inv.get("proposer_name", "Someone")
+            inv_id = inv.get("id")
+            proposer_id = inv.get("proposer_id")
+
+            st.markdown(
+                f"<div style='background:#111113;"
+                f"border:1px solid #1c1c1f;"
+                f"border-radius:14px;"
+                f"padding:1.2rem 1.4rem;"
+                f"margin-bottom:0.8rem;'>"
+                f"<div style='font-size:0.68rem;"
+                f"font-weight:500;letter-spacing:0.1em;"
+                f"text-transform:uppercase;color:#3f3f46;"
+                f"margin-bottom:0.5rem;'>"
+                f"Team Invitation</div>"
+                f"<div style='font-family:"
+                f"Playfair Display,serif;"
+                f"font-size:0.95rem;color:#f4f4f5;"
+                f"margin-bottom:0.3rem;'>"
+                f"{proposer} invited you to their team"
+                f"</div>"
+                f"<div style='font-size:0.78rem;"
+                f"color:#71717a;font-style:italic;"
+                f"font-weight:300;'>"
+                f"Accept to join their hackathon team."
+                f"</div></div>",
+                unsafe_allow_html=True
+            )
+
+            ic1, ic2, ic3 = st.columns([2, 1, 1])
+
+            with ic2:
+                if st.button(
+                    "Accept",
+                    key=f"inv_accept_{inv_id}",
+                    use_container_width=True
+                ):
+                    result = respond_to_invite(
+                        invitation_id=inv_id,
+                        accepted=True,
+                        proposer_id=proposer_id
+                    )
+                    if result == "approved_directly":
+                        st.success(
+                            f"You joined "
+                            f"{proposer}'s team!"
+                        )
+                    elif result == "voting_started":
+                        st.success(
+                            "Accepted! Team members "
+                            "are voting to approve you."
+                        )
+                    st.rerun()
+
+            with ic3:
+                if st.button(
+                    "Decline",
+                    key=f"inv_decline_{inv_id}",
+                    use_container_width=True
+                ):
+                    respond_to_invite(
+                        invitation_id=inv_id,
+                        accepted=False,
+                        proposer_id=proposer_id
+                    )
+                    st.info("Invitation declined.")
+                    st.rerun()
+
+        st.markdown("<hr>", unsafe_allow_html=True)
+
+# ── TEAM VOTE REQUESTS (for existing members) ─────────
+if user:
+    pending_votes = get_pending_votes_for_user(user.id)
+
+    if pending_votes:
+        st.markdown(
+            "<div class='hm-label' "
+            "style='margin-bottom:0.8rem;'>"
+            "Team Vote Requests</div>",
+            unsafe_allow_html=True
+        )
+
+        for vote in pending_votes:
+            inv = vote.get("team_invitations", {})
+            if not inv:
+                continue
+
+            invitee_name = inv.get(
+                "invitee_name", "Someone"
+            )
+            proposed_by = inv.get(
+                "proposer_name", "A teammate"
+            )
+            invitation_id = vote.get("invitation_id")
+            vote_id = vote.get("id")
+            invitee_id = inv.get("invitee_id")
+
+            st.markdown(
+                f"<div style='background:#111113;"
+                f"border:1px solid #1c1c1f;"
+                f"border-radius:14px;"
+                f"padding:1.2rem 1.4rem;"
+                f"margin-bottom:0.8rem;'>"
+                f"<div style='font-size:0.68rem;"
+                f"font-weight:500;letter-spacing:0.1em;"
+                f"text-transform:uppercase;color:#3f3f46;"
+                f"margin-bottom:0.5rem;'>"
+                f"Team Vote Required</div>"
+                f"<div style='font-family:"
+                f"Playfair Display,serif;"
+                f"font-size:0.95rem;color:#f4f4f5;"
+                f"margin-bottom:0.3rem;'>"
+                f"{proposed_by} wants to add "
+                f"{invitee_name}</div>"
+                f"<div style='font-size:0.78rem;"
+                f"color:#71717a;font-style:italic;"
+                f"font-weight:300;'>"
+                f"{invitee_name} has accepted. "
+                f"Your vote determines if they join."
+                f"</div></div>",
+                unsafe_allow_html=True
+            )
+
+            vc1, vc2, vc3 = st.columns([2, 1, 1])
+
+            with vc2:
+                if st.button(
+                    "Approve",
+                    key=f"vote_approve_{vote_id}",
+                    use_container_width=True
+                ):
+                    result = cast_vote(
+                        vote_id=vote_id,
+                        invitation_id=invitation_id,
+                        vote_value="accepted",
+                        voter_id=user.id,
+                        voter_name=profile.get(
+                            "full_name", "User"
+                        ),
+                        invitee_id=invitee_id,
+                        invitee_name=invitee_name
+                    )
+                    if result == "approved":
+                        st.success(
+                            f"{invitee_name} joined "
+                            f"your team!"
+                        )
+                    else:
+                        st.success(
+                            "Vote recorded. Waiting "
+                            "for others."
+                        )
+                    st.rerun()
+
+            with vc3:
+                if st.button(
+                    "Reject",
+                    key=f"vote_reject_{vote_id}",
+                    use_container_width=True
+                ):
+                    cast_vote(
+                        vote_id=vote_id,
+                        invitation_id=invitation_id,
+                        vote_value="rejected",
+                        voter_id=user.id,
+                        voter_name=profile.get(
+                            "full_name", "User"
+                        ),
+                        invitee_id=invitee_id,
+                        invitee_name=invitee_name
+                    )
+                    st.info(f"{invitee_name} not added.")
+                    st.rerun()
+
+        st.markdown("<hr>", unsafe_allow_html=True)
+        
 # ── INCOMING REQUESTS ─────────────────────────────────
 from utils.supabase_client import get_my_requests, update_request_status
 
