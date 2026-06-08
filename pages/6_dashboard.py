@@ -76,7 +76,7 @@ st.markdown("""
 # If not logged in send to login page
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.auth import check_session
+from utils.auth import check_session, sign_out
 
 check_session()
 if "user" not in st.session_state or not st.session_state.user:
