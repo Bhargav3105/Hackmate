@@ -553,3 +553,76 @@ def get_team_messages(user_id, limit=50):
     except Exception as e:
         print(f"Error getting messages: {e}")
         return []
+    
+def add_team_task(created_by_id, created_by_name,
+                  team_member_ids, task_text,
+                  assigned_to):
+    """Add a new task visible to all team members"""
+    try:
+        client = get_admin_client()
+
+        all_ids = [str(created_by_id)] + [
+            str(mid) for mid in team_member_ids
+        ]
+
+        client.table("team_tasks").insert({
+            "created_by_id": str(created_by_id),
+            "created_by_name": created_by_name,
+            "team_member_ids": all_ids,
+            "task_text": task_text,
+            "assigned_to": assigned_to,
+            "status": "todo"
+        }).execute()
+
+        return True
+
+    except Exception as e:
+        print(f"Error adding task: {e}")
+        return False
+
+
+def get_team_tasks(user_id):
+    """Get all tasks visible to this user"""
+    try:
+        client = get_admin_client()
+        uid = str(user_id)
+
+        response = client.table("team_tasks")\
+            .select("*")\
+            .contains("team_member_ids", [uid])\
+            .order("created_at", desc=False)\
+            .execute()
+
+        return response.data or []
+
+    except Exception as e:
+        print(f"Error getting tasks: {e}")
+        return []
+
+
+def update_task_status(task_id, new_status):
+    """Move task to new status"""
+    try:
+        client = get_admin_client()
+        client.table("team_tasks")\
+            .update({"status": new_status})\
+            .eq("id", task_id)\
+            .execute()
+        return True
+    except Exception as e:
+        print(f"Error updating task: {e}")
+        return False
+
+
+def delete_team_task(task_id):
+    """Delete a task"""
+    try:
+        client = get_admin_client()
+        client.table("team_tasks")\
+            .delete()\
+            .eq("id", task_id)\
+            .execute()
+        return True
+    except Exception as e:
+        print(f"Error deleting task: {e}")
+        return False

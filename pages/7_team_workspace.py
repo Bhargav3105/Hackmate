@@ -3,7 +3,9 @@ from dotenv import load_dotenv
 import os, sys
 from datetime import datetime
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)
+)))
 from utils.auth import check_session
 from utils.styles import load_css
 from utils.supabase_client import (
@@ -12,7 +14,11 @@ from utils.supabase_client import (
     cast_vote,
     parse_list_field,
     send_team_message,
-    get_team_messages
+    get_team_messages,
+    add_team_task,
+    get_team_tasks,
+    update_task_status,
+    delete_team_task
 )
 
 load_dotenv()
@@ -27,7 +33,8 @@ st.markdown(load_css(), unsafe_allow_html=True)
 
 # ── SESSION CHECK ─────────────────────────────────────
 check_session()
-if "user" not in st.session_state or not st.session_state.user:
+if "user" not in st.session_state or \
+        not st.session_state.user:
     st.switch_page("pages/2_login.py")
 
 profile = st.session_state.get("profile", {})
@@ -37,17 +44,21 @@ user = st.session_state.get("user")
 # ── LOAD REAL TEAM MEMBERS ────────────────────────────
 real_members = get_team_members(user.id) if user else []
 member_names = [name] + [m["name"] for m in real_members]
+team_ids = [m["id"] for m in real_members]
 
-# ── INIT SESSION DATA ─────────────────────────────────
-if "tasks" not in st.session_state:
-    st.session_state.tasks = {
-        "todo": [],
-        "in_progress": [],
-        "done": []
-    }
+# ── LOAD TASKS FROM DATABASE ──────────────────────────
+all_tasks = get_team_tasks(user.id) if user else []
+todo_tasks = [t for t in all_tasks
+              if t["status"] == "todo"]
+progress_tasks = [t for t in all_tasks
+                  if t["status"] == "in_progress"]
+done_tasks = [t for t in all_tasks
+              if t["status"] == "done"]
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+total = len(all_tasks)
+done_count = len(done_tasks)
+in_prog = len(progress_tasks)
+progress = done_count / total if total > 0 else 0
 
 # ── NAV ───────────────────────────────────────────────
 st.markdown(
@@ -84,45 +95,41 @@ st.markdown(
 )
 
 members_html = "".join([
-    f"<span style='display:inline-flex;align-items:center;"
-    f"gap:6px;background:#111113;border:1px solid #1c1c1f;"
-    f"border-radius:999px;padding:4px 12px 4px 6px;"
+    f"<span style='display:inline-flex;"
+    f"align-items:center;gap:6px;"
+    f"background:#111113;border:1px solid #1c1c1f;"
+    f"border-radius:999px;"
+    f"padding:4px 12px 4px 6px;"
     f"margin-right:6px;margin-bottom:6px;'>"
-    f"<span style='width:22px;height:22px;border-radius:50%;"
-    f"background:#18181b;border:1px solid #27272a;"
+    f"<span style='width:22px;height:22px;"
+    f"border-radius:50%;background:#18181b;"
+    f"border:1px solid #27272a;"
     f"display:inline-flex;align-items:center;"
     f"justify-content:center;"
     f"font-family:Playfair Display,serif;"
-    f"font-size:0.7rem;color:#a1a1aa;'>{m[0].upper()}</span>"
-    f"<span style='font-size:0.78rem;color:#71717a;'>{m}</span>"
-    f"</span>"
+    f"font-size:0.7rem;color:#a1a1aa;'>"
+    f"{m[0].upper()}</span>"
+    f"<span style='font-size:0.78rem;color:#71717a;'>"
+    f"{m}</span></span>"
     for m in member_names
 ])
 
 st.markdown(
-    f"<div style='margin-bottom:1.5rem;'>{members_html}</div>",
+    f"<div style='margin-bottom:1.5rem;'>"
+    f"{members_html}</div>",
     unsafe_allow_html=True
 )
 
-# ── INVITE NEW MEMBER BUTTON ──────────────────────────
-st.markdown(
-    "<div class='hm-label' style='margin-bottom:0.6rem;'>"
-    "Invite New Member</div>",
-    unsafe_allow_html=True
-)
-
-if st.button(
-    "Find & Invite Teammates →",
-    use_container_width=False
-):
+# ── INVITE BUTTON ─────────────────────────────────────
+if st.button("Find and Invite Teammates →"):
     st.switch_page("pages/4_find_teammates.py")
 
 st.markdown(
     "<div style='font-size:0.78rem;color:#3f3f46;"
     "font-weight:300;margin-top:0.4rem;"
     "margin-bottom:1.5rem;'>"
-    "Browse real profiles, check compatibility "
-    "and invite compatible teammates.</div>",
+    "Browse real profiles and invite compatible "
+    "teammates.</div>",
     unsafe_allow_html=True
 )
 
@@ -132,7 +139,8 @@ pending_votes = get_pending_votes_for_user(user.id) \
 
 if pending_votes:
     st.markdown(
-        "<div class='hm-label' style='margin-bottom:0.8rem;'>"
+        "<div class='hm-label' "
+        "style='margin-bottom:0.8rem;'>"
         "Team Vote Requests</div>",
         unsafe_allow_html=True
     )
@@ -143,7 +151,7 @@ if pending_votes:
             continue
 
         invitee_name = inv.get("invitee_name", "Someone")
-        proposed_by = inv.get("proposed_by_name", "A teammate")
+        proposed_by = inv.get("proposer_name", "A teammate")
         invitation_id = vote.get("invitation_id")
         vote_id = vote.get("id")
         invitee_id = inv.get("invitee_id")
@@ -164,7 +172,8 @@ if pending_votes:
             f"{invitee_name}</div>"
             f"<div style='font-size:0.78rem;color:#71717a;"
             f"font-style:italic;font-weight:300;'>"
-            f"Vote to approve or reject this new team member."
+            f"{invitee_name} accepted the invite. "
+            f"Your vote determines if they join."
             f"</div></div>",
             unsafe_allow_html=True
         )
@@ -219,12 +228,9 @@ if pending_votes:
     st.markdown("<hr>", unsafe_allow_html=True)
 
 # ── PROGRESS BAR ──────────────────────────────────────
-total = sum(len(v) for v in st.session_state.tasks.values())
-done_count = len(st.session_state.tasks["done"])
-progress = done_count / total if total > 0 else 0
-
 st.markdown(
-    f"<div style='display:flex;justify-content:space-between;"
+    f"<div style='display:flex;"
+    f"justify-content:space-between;"
     f"align-items:center;margin-bottom:0.5rem;'>"
     f"<div class='hm-label'>Project Progress</div>"
     f"<div style='font-size:0.72rem;color:#52525b;'>"
@@ -238,7 +244,6 @@ st.markdown(
     "<div style='height:1.5rem'></div>",
     unsafe_allow_html=True
 )
-
 st.markdown("<hr>", unsafe_allow_html=True)
 
 # ── TWO COLUMNS ───────────────────────────────────────
@@ -274,14 +279,21 @@ with left:
             use_container_width=True
         ):
             if new_task.strip():
-                st.session_state.tasks["todo"].append({
-                    "text": new_task.strip(),
-                    "assigned": assigned_to,
-                    "added_by": name
-                })
-                st.rerun()
+                success = add_team_task(
+                    created_by_id=user.id,
+                    created_by_name=name,
+                    team_member_ids=team_ids,
+                    task_text=new_task.strip(),
+                    assigned_to=assigned_to
+                )
+                if success:
+                    st.rerun()
+                else:
+                    st.error("Could not add task.")
             else:
-                st.error("Please enter a task description.")
+                st.error(
+                    "Please enter a task description."
+                )
 
     st.markdown(
         "<div style='height:1rem'></div>",
@@ -296,7 +308,7 @@ with left:
         unsafe_allow_html=True
     )
 
-    if not st.session_state.tasks["todo"]:
+    if not todo_tasks:
         st.markdown(
             "<div style='font-size:0.8rem;color:#27272a;"
             "font-style:italic;padding:0.8rem 0;'>"
@@ -304,21 +316,19 @@ with left:
             unsafe_allow_html=True
         )
 
-    for i, task in enumerate(
-        st.session_state.tasks["todo"]
-    ):
-        task_text = task["text"] \
-            if isinstance(task, dict) else task
-        assigned = task.get("assigned", "") \
-            if isinstance(task, dict) else ""
+    for task in todo_tasks:
+        task_id = task["id"]
+        task_text = task["task_text"]
+        assigned = task["assigned_to"]
 
-        tc1, tc2 = st.columns([5, 1])
+        tc1, tc2, tc3 = st.columns([5, 1, 1])
         with tc1:
             st.markdown(
                 f"<div class='hm-task hm-task-todo'>"
                 f"{task_text}"
-                f"<div style='font-size:0.68rem;color:#3f3f46;"
-                f"margin-top:4px;letter-spacing:0.04em;'>"
+                f"<div style='font-size:0.68rem;"
+                f"color:#3f3f46;margin-top:4px;"
+                f"letter-spacing:0.04em;'>"
                 f"→ {assigned}</div>"
                 f"</div>",
                 unsafe_allow_html=True
@@ -326,13 +336,20 @@ with left:
         with tc2:
             if st.button(
                 "→",
-                key=f"todo_{i}",
+                key=f"todo_mv_{task_id}",
                 help="Move to In Progress"
             ):
-                item = st.session_state\
-                    .tasks["todo"].pop(i)
-                st.session_state\
-                    .tasks["in_progress"].append(item)
+                update_task_status(
+                    task_id, "in_progress"
+                )
+                st.rerun()
+        with tc3:
+            if st.button(
+                "✕",
+                key=f"todo_del_{task_id}",
+                help="Delete task"
+            ):
+                delete_team_task(task_id)
                 st.rerun()
 
     st.markdown(
@@ -349,7 +366,7 @@ with left:
         unsafe_allow_html=True
     )
 
-    if not st.session_state.tasks["in_progress"]:
+    if not progress_tasks:
         st.markdown(
             "<div style='font-size:0.8rem;color:#27272a;"
             "font-style:italic;padding:0.8rem 0;'>"
@@ -357,21 +374,19 @@ with left:
             unsafe_allow_html=True
         )
 
-    for i, task in enumerate(
-        st.session_state.tasks["in_progress"]
-    ):
-        task_text = task["text"] \
-            if isinstance(task, dict) else task
-        assigned = task.get("assigned", "") \
-            if isinstance(task, dict) else ""
+    for task in progress_tasks:
+        task_id = task["id"]
+        task_text = task["task_text"]
+        assigned = task["assigned_to"]
 
-        tc1, tc2 = st.columns([5, 1])
+        tc1, tc2, tc3 = st.columns([5, 1, 1])
         with tc1:
             st.markdown(
                 f"<div class='hm-task hm-task-progress'>"
                 f"{task_text}"
-                f"<div style='font-size:0.68rem;color:#52525b;"
-                f"margin-top:4px;letter-spacing:0.04em;'>"
+                f"<div style='font-size:0.68rem;"
+                f"color:#52525b;margin-top:4px;"
+                f"letter-spacing:0.04em;'>"
                 f"→ {assigned}</div>"
                 f"</div>",
                 unsafe_allow_html=True
@@ -379,13 +394,18 @@ with left:
         with tc2:
             if st.button(
                 "✓",
-                key=f"prog_{i}",
+                key=f"prog_mv_{task_id}",
                 help="Mark as Done"
             ):
-                item = st.session_state\
-                    .tasks["in_progress"].pop(i)
-                st.session_state\
-                    .tasks["done"].append(item)
+                update_task_status(task_id, "done")
+                st.rerun()
+        with tc3:
+            if st.button(
+                "✕",
+                key=f"prog_del_{task_id}",
+                help="Delete task"
+            ):
+                delete_team_task(task_id)
                 st.rerun()
 
     st.markdown(
@@ -401,7 +421,7 @@ with left:
         unsafe_allow_html=True
     )
 
-    if not st.session_state.tasks["done"]:
+    if not done_tasks:
         st.markdown(
             "<div style='font-size:0.8rem;color:#27272a;"
             "font-style:italic;padding:0.8rem 0;'>"
@@ -409,15 +429,14 @@ with left:
             unsafe_allow_html=True
         )
 
-    for task in st.session_state.tasks["done"]:
-        task_text = task["text"] \
-            if isinstance(task, dict) else task
-        assigned = task.get("assigned", "") \
-            if isinstance(task, dict) else ""
+    for task in done_tasks:
+        task_text = task["task_text"]
+        assigned = task["assigned_to"]
         st.markdown(
             f"<div class='hm-task hm-task-done'>"
             f"{task_text}"
-            f"<div style='font-size:0.68rem;margin-top:4px;'>"
+            f"<div style='font-size:0.68rem;"
+            f"margin-top:4px;'>"
             f"→ {assigned}</div>"
             f"</div>",
             unsafe_allow_html=True
@@ -452,16 +471,12 @@ with right:
             unsafe_allow_html=True
         )
 
-    # Display messages from database
     for msg in db_messages:
         is_me = str(msg["sender_id"]) == str(user.id)
         sender = msg["sender_name"]
 
-        # Format time nicely
         try:
-            from datetime import timezone
             raw_time = msg["created_at"]
-            # Handle both formats
             if "T" in raw_time:
                 dt = datetime.fromisoformat(
                     raw_time.replace("Z", "+00:00")
@@ -494,7 +509,6 @@ with right:
         unsafe_allow_html=True
     )
 
-    # ── SEND MESSAGE ──────────────────────────────────
     msg_input = st.text_input(
         "Message",
         placeholder="Say something to your team...",
@@ -510,22 +524,17 @@ with right:
         )
 
     if send and msg_input.strip():
-        # Get all team member IDs
-        team_ids = [m["id"] for m in real_members]
-
         success = send_team_message(
             sender_id=user.id,
             sender_name=name,
             team_member_ids=team_ids,
             message=msg_input.strip()
         )
-
         if success:
             st.rerun()
         else:
             st.error("Could not send message.")
 
-    # ── REFRESH BUTTON ────────────────────────────────
     st.markdown(
         "<div style='height:0.5rem'></div>",
         unsafe_allow_html=True
@@ -545,6 +554,11 @@ with right:
         unsafe_allow_html=True
     )
 
+    st.markdown(
+        "<div style='height:1.5rem'></div>",
+        unsafe_allow_html=True
+    )
+
     # ── TEAM STATS ────────────────────────────────────
     st.markdown(
         "<div class='hm-label'>Team Stats</div>",
@@ -555,16 +569,14 @@ with right:
         unsafe_allow_html=True
     )
 
-    in_prog = len(st.session_state.tasks["in_progress"])
-
     s1, s2, s3 = st.columns(3)
     with s1:
         st.markdown(
             f"<div class='hm-stat-card'>"
             f"<div class='hm-stat-card-number'>"
             f"{done_count}</div>"
-            f"<div class='hm-stat-card-label'>Done</div>"
-            f"</div>",
+            f"<div class='hm-stat-card-label'>"
+            f"Done</div></div>",
             unsafe_allow_html=True
         )
     with s2:
@@ -572,8 +584,8 @@ with right:
             f"<div class='hm-stat-card'>"
             f"<div class='hm-stat-card-number'>"
             f"{in_prog}</div>"
-            f"<div class='hm-stat-card-label'>Active</div>"
-            f"</div>",
+            f"<div class='hm-stat-card-label'>"
+            f"Active</div></div>",
             unsafe_allow_html=True
         )
     with s3:
@@ -581,7 +593,7 @@ with right:
             f"<div class='hm-stat-card'>"
             f"<div class='hm-stat-card-number'>"
             f"{len(member_names)}</div>"
-            f"<div class='hm-stat-card-label'>Members</div>"
-            f"</div>",
+            f"<div class='hm-stat-card-label'>"
+            f"Members</div></div>",
             unsafe_allow_html=True
         )
