@@ -626,3 +626,16 @@ def delete_team_task(task_id):
     except Exception as e:
         print(f"Error deleting task: {e}")
         return False
+    
+def save_deadline(user_id, deadline_str):
+    """Save hackathon deadline for user"""
+    try:
+        client = get_admin_client()
+        client.table("profiles")\
+            .update({"hackathon_deadline": deadline_str})\
+            .eq("id", str(user_id))\
+            .execute()
+        return True
+    except Exception as e:
+        print(f"Error saving deadline: {e}")
+        return False

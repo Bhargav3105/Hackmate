@@ -20,7 +20,7 @@ from utils.supabase_client import (
     update_task_status,
     delete_team_task
 )
-
+from utils.ai_helper import assign_team_roles
 load_dotenv()
 
 st.set_page_config(
@@ -226,6 +226,158 @@ if pending_votes:
                 st.rerun()
 
     st.markdown("<hr>", unsafe_allow_html=True)
+
+# ── AI ROLE ASSIGNMENT ────────────────────────────────
+st.markdown(
+    "<div class='hm-label' style='margin-bottom:0.6rem;'>"
+    "AI Role Assignment</div>",
+    unsafe_allow_html=True
+)
+
+with st.expander("Generate AI roles for your team"):
+
+    project_context = st.text_input(
+        "Project idea (optional)",
+        placeholder="e.g. AI-powered developer tool",
+        key="project_context_input",
+        label_visibility="collapsed"
+    )
+
+    if st.button(
+        "Assign Roles with AI",
+        key="assign_roles_btn",
+        use_container_width=False
+    ):
+        if len(member_names) < 2:
+            st.warning(
+                "Add at least one teammate first "
+                "to get role assignments."
+            )
+        else:
+            with st.spinner(
+                "AI is analysing your team..."
+            ):
+                try:
+                    # Build team member data
+                    from utils.supabase_client import \
+                        get_all_profiles, get_profile
+
+                    team_data = []
+
+                    # Add current user
+                    my_profile = st.session_state\
+                        .get("profile", {})
+                    team_data.append({
+                        "name": name,
+                        "skills": parse_list_field(
+                            my_profile.get("skills", [])
+                        )
+                    })
+
+                    # Add each team member
+                    for member in real_members:
+                        mp = get_profile(member["id"])
+                        if mp:
+                            team_data.append({
+                                "name": member["name"],
+                                "skills": parse_list_field(
+                                    mp.get("skills", [])
+                                )
+                            })
+                        else:
+                            team_data.append({
+                                "name": member["name"],
+                                "skills": []
+                            })
+
+                    result = assign_team_roles(
+                        team_members=team_data,
+                        project_idea=project_context
+                    )
+
+                    roles = result.get("roles", [])
+                    summary = result.get(
+                        "team_summary", ""
+                    )
+
+                    # Team summary
+                    st.markdown(
+                        f"<div style='background:#111113;"
+                        f"border:1px solid #1c1c1f;"
+                        f"border-radius:12px;"
+                        f"padding:1rem 1.2rem;"
+                        f"margin-bottom:1rem;'>"
+                        f"<div style='font-size:0.68rem;"
+                        f"font-weight:500;"
+                        f"letter-spacing:0.1em;"
+                        f"text-transform:uppercase;"
+                        f"color:#3f3f46;"
+                        f"margin-bottom:0.4rem;'>"
+                        f"Team Summary</div>"
+                        f"<div style='font-size:0.85rem;"
+                        f"color:#a1a1aa;font-style:italic;"
+                        f"font-weight:300;'>"
+                        f"{summary}</div>"
+                        f"</div>",
+                        unsafe_allow_html=True
+                    )
+
+                    # Individual roles
+                    for role in roles:
+                        responsibilities = "".join([
+                            f"<div style='font-size:0.78rem;"
+                            f"color:#71717a;font-weight:300;"
+                            f"padding:3px 0;'>"
+                            f"· {r}</div>"
+                            for r in role.get(
+                                "responsibilities", []
+                            )
+                        ])
+
+                        st.markdown(
+                            f"<div style='background:#111113;"
+                            f"border:1px solid #1c1c1f;"
+                            f"border-radius:12px;"
+                            f"padding:1.2rem;"
+                            f"margin-bottom:0.6rem;'>"
+                            f"<div style='display:flex;"
+                            f"justify-content:space-between;"
+                            f"align-items:center;"
+                            f"margin-bottom:0.5rem;'>"
+                            f"<div style='font-family:"
+                            f"Playfair Display,serif;"
+                            f"font-size:0.95rem;"
+                            f"color:#f4f4f5;'>"
+                            f"{role.get('name')}</div>"
+                            f"<span style='font-size:0.72rem;"
+                            f"font-weight:500;"
+                            f"letter-spacing:0.06em;"
+                            f"background:#18181b;"
+                            f"border:1px solid #27272a;"
+                            f"color:#a1a1aa;"
+                            f"padding:3px 10px;"
+                            f"border-radius:999px;'>"
+                            f"{role.get('role')}"
+                            f"</span></div>"
+                            f"<div style='font-size:0.78rem;"
+                            f"color:#52525b;"
+                            f"font-style:italic;"
+                            f"margin-bottom:0.5rem;'>"
+                            f"{role.get('why')}</div>"
+                            f"{responsibilities}"
+                            f"</div>",
+                            unsafe_allow_html=True
+                        )
+
+                except Exception as e:
+                    st.error(
+                        f"Role assignment failed: {e}"
+                    )
+
+st.markdown(
+    "<div style='height:1rem'></div>",
+    unsafe_allow_html=True
+)
 
 # ── PROGRESS BAR ──────────────────────────────────────
 st.markdown(

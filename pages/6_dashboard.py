@@ -159,6 +159,195 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
+ # ── HACKATHON COUNTDOWN ───────────────────────────────
+from utils.supabase_client import save_deadline
+from datetime import datetime, timezone
+import math
+
+st.markdown(
+    "<div class='hm-label' style='margin-bottom:0.8rem;'>"
+    "Hackathon Countdown</div>",
+    unsafe_allow_html=True
+)
+
+# Get saved deadline from profile
+saved_deadline = profile.get("hackathon_deadline")
+
+# Show deadline setter
+with st.expander(
+    "Set hackathon deadline" if not saved_deadline
+    else "Change deadline"
+):
+    deadline_date = st.date_input(
+        "Hackathon end date",
+        key="deadline_date"
+    )
+    deadline_time = st.time_input(
+        "End time",
+        key="deadline_time"
+    )
+    if st.button(
+        "Save Deadline",
+        key="save_deadline_btn"
+    ):
+        deadline_dt = datetime.combine(
+            deadline_date, deadline_time
+        )
+        deadline_str = deadline_dt.isoformat()
+        if save_deadline(user.id, deadline_str):
+            st.session_state.profile[
+                "hackathon_deadline"
+            ] = deadline_str
+            st.success("Deadline saved!")
+            st.rerun()
+
+# Show countdown if deadline is set
+if saved_deadline:
+    try:
+        deadline_dt = datetime.fromisoformat(
+            str(saved_deadline).replace("Z", "")
+        )
+        now = datetime.now()
+        diff = deadline_dt - now
+
+        if diff.total_seconds() > 0:
+            days = diff.days
+            hours = diff.seconds // 3600
+            minutes = (diff.seconds % 3600) // 60
+            seconds = diff.seconds % 60
+
+            # Urgency color
+            if days > 3:
+                clr = "#34d399"
+            elif days > 1:
+                clr = "#fbbf24"
+            else:
+                clr = "#f87171"
+
+            st.markdown(f"""
+                <div style='background:#111113;
+                     border:1px solid #1c1c1f;
+                     border-radius:16px;
+                     padding:1.5rem;
+                     margin-bottom:1.5rem;'>
+                    <div style='display:grid;
+                         grid-template-columns:
+                         1fr 1fr 1fr 1fr;
+                         gap:1rem;'>
+                        <div style='text-align:center;'>
+                            <div style='font-family:
+                                 Playfair Display,serif;
+                                 font-size:2.5rem;
+                                 font-weight:500;
+                                 color:{clr};
+                                 line-height:1;'>
+                                {days:02d}
+                            </div>
+                            <div style='font-size:0.65rem;
+                                 font-weight:500;
+                                 letter-spacing:0.1em;
+                                 text-transform:uppercase;
+                                 color:#3f3f46;
+                                 margin-top:0.4rem;'>
+                                Days
+                            </div>
+                        </div>
+                        <div style='text-align:center;'>
+                            <div style='font-family:
+                                 Playfair Display,serif;
+                                 font-size:2.5rem;
+                                 font-weight:500;
+                                 color:{clr};
+                                 line-height:1;'>
+                                {hours:02d}
+                            </div>
+                            <div style='font-size:0.65rem;
+                                 font-weight:500;
+                                 letter-spacing:0.1em;
+                                 text-transform:uppercase;
+                                 color:#3f3f46;
+                                 margin-top:0.4rem;'>
+                                Hours
+                            </div>
+                        </div>
+                        <div style='text-align:center;'>
+                            <div style='font-family:
+                                 Playfair Display,serif;
+                                 font-size:2.5rem;
+                                 font-weight:500;
+                                 color:{clr};
+                                 line-height:1;'>
+                                {minutes:02d}
+                            </div>
+                            <div style='font-size:0.65rem;
+                                 font-weight:500;
+                                 letter-spacing:0.1em;
+                                 text-transform:uppercase;
+                                 color:#3f3f46;
+                                 margin-top:0.4rem;'>
+                                Minutes
+                            </div>
+                        </div>
+                        <div style='text-align:center;'>
+                            <div style='font-family:
+                                 Playfair Display,serif;
+                                 font-size:2.5rem;
+                                 font-weight:500;
+                                 color:{clr};
+                                 line-height:1;'>
+                                {seconds:02d}
+                            </div>
+                            <div style='font-size:0.65rem;
+                                 font-weight:500;
+                                 letter-spacing:0.1em;
+                                 text-transform:uppercase;
+                                 color:#3f3f46;
+                                 margin-top:0.4rem;'>
+                                Seconds
+                            </div>
+                        </div>
+                    </div>
+                    <div style='margin-top:1rem;
+                         font-size:0.75rem;
+                         color:#3f3f46;
+                         text-align:center;'>
+                        Deadline:
+                        {deadline_dt.strftime(
+                            "%d %b %Y at %I:%M %p"
+                        )}
+                        · Refresh to update seconds
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
+        else:
+            st.markdown(
+                "<div style='background:#111113;"
+                "border:1px solid #f87171;"
+                "border-radius:16px;padding:1.2rem;"
+                "text-align:center;"
+                "margin-bottom:1.5rem;'>"
+                "<div style='font-family:"
+                "Playfair Display,serif;"
+                "font-size:1.2rem;color:#f87171;'>"
+                "Hackathon has ended</div>"
+                "<div style='font-size:0.8rem;"
+                "color:#52525b;margin-top:0.3rem;'>"
+                "Hope you shipped something great!"
+                "</div></div>",
+                unsafe_allow_html=True
+            )
+
+    except Exception as e:
+        st.markdown(
+            "<div style='font-size:0.8rem;"
+            "color:#52525b;margin-bottom:1rem;'>"
+            "Set your deadline above to see "
+            "the countdown.</div>",
+            unsafe_allow_html=True
+        )
+
+st.markdown("<hr>", unsafe_allow_html=True)
 
 # ── STATS ROW ─────────────────────────────────────────
 s1, s2, s3, s4 = st.columns(4)

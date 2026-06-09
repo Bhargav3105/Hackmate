@@ -219,3 +219,71 @@ def get_ai_recommendations(user_profile):
     cleaned = clean_json(raw)
     result = json.loads(cleaned)
     return result
+
+def assign_team_roles(team_members, project_idea=""):
+    """
+    Analyzes team members' skills and assigns
+    the best role for each person.
+    team_members = list of dicts with
+    name and skills
+    """
+
+    members_text = "\n".join([
+        f"- {m['name']}: {', '.join(m.get('skills', []))}"
+        for m in team_members
+    ])
+
+    prompt = f"""
+    You are an expert hackathon team organizer.
+
+    Analyze this team and assign the best role
+    for each member based on their skills.
+
+    Team members and their skills:
+    {members_text}
+
+    Project context: {project_idea if project_idea
+    else 'General hackathon project'}
+
+    Return ONLY a JSON object:
+    {{
+        "roles": [
+            {{
+                "name": "member name",
+                "role": "specific role title",
+                "responsibilities": [
+                    "key responsibility 1",
+                    "key responsibility 2",
+                    "key responsibility 3"
+                ],
+                "why": "one sentence explaining why
+                this role suits them"
+            }}
+        ],
+        "team_summary": "one sentence about
+        the team's overall strength"
+    }}
+    """
+
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a hackathon team "
+                           "organizer. Return valid "
+                           "JSON only."
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        temperature=0.7,
+        max_tokens=1000
+    )
+
+    raw = response.choices[0].message.content
+    cleaned = clean_json(raw)
+    result = json.loads(cleaned)
+    return result
