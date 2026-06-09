@@ -10,7 +10,9 @@ from utils.supabase_client import (
     get_team_members,
     get_pending_votes_for_user,
     cast_vote,
-    parse_list_field
+    parse_list_field,
+    send_team_message,
+    get_team_messages
 )
 
 load_dotenv()
@@ -432,34 +434,58 @@ with right:
         unsafe_allow_html=True
     )
 
-    if not st.session_state.messages:
+    # Load messages from Supabase
+    db_messages = get_team_messages(user.id) \
+        if user else []
+
+    if not db_messages:
         st.markdown(
             "<div style='background:#111113;"
             "border:1px solid #1c1c1f;"
             "border-radius:12px;padding:2rem;"
             "text-align:center;margin-bottom:1rem;'>"
-            "<div style='font-size:0.85rem;color:#3f3f46;"
-            "font-style:italic;font-weight:300;'>"
+            "<div style='font-size:0.85rem;"
+            "color:#3f3f46;font-style:italic;"
+            "font-weight:300;'>"
             "No messages yet. Say hello to your team."
             "</div></div>",
             unsafe_allow_html=True
         )
 
-    for msg in st.session_state.messages:
-        if msg["is_me"]:
+    # Display messages from database
+    for msg in db_messages:
+        is_me = str(msg["sender_id"]) == str(user.id)
+        sender = msg["sender_name"]
+
+        # Format time nicely
+        try:
+            from datetime import timezone
+            raw_time = msg["created_at"]
+            # Handle both formats
+            if "T" in raw_time:
+                dt = datetime.fromisoformat(
+                    raw_time.replace("Z", "+00:00")
+                )
+                time_str = dt.strftime("%I:%M %p")
+            else:
+                time_str = raw_time[-8:-3]
+        except Exception:
+            time_str = ""
+
+        if is_me:
             st.markdown(
                 f"<div class='hm-chat-me'>"
                 f"<div class='hm-chat-sender'>"
-                f"You · {msg['time']}</div>"
-                f"{msg['text']}</div>",
+                f"You · {time_str}</div>"
+                f"{msg['message']}</div>",
                 unsafe_allow_html=True
             )
         else:
             st.markdown(
                 f"<div class='hm-chat-other'>"
                 f"<div class='hm-chat-sender'>"
-                f"{msg['sender']} · {msg['time']}</div>"
-                f"{msg['text']}</div>",
+                f"{sender} · {time_str}</div>"
+                f"{msg['message']}</div>",
                 unsafe_allow_html=True
             )
 
@@ -468,6 +494,7 @@ with right:
         unsafe_allow_html=True
     )
 
+    # ── SEND MESSAGE ──────────────────────────────────
     msg_input = st.text_input(
         "Message",
         placeholder="Say something to your team...",
@@ -477,20 +504,44 @@ with right:
 
     sc1, sc2 = st.columns([4, 1])
     with sc2:
-        send = st.button("Send", use_container_width=True)
+        send = st.button(
+            "Send",
+            use_container_width=True
+        )
 
     if send and msg_input.strip():
-        now = datetime.now().strftime("%I:%M %p")
-        st.session_state.messages.append({
-            "sender": name,
-            "text": msg_input.strip(),
-            "time": now,
-            "is_me": True
-        })
+        # Get all team member IDs
+        team_ids = [m["id"] for m in real_members]
+
+        success = send_team_message(
+            sender_id=user.id,
+            sender_name=name,
+            team_member_ids=team_ids,
+            message=msg_input.strip()
+        )
+
+        if success:
+            st.rerun()
+        else:
+            st.error("Could not send message.")
+
+    # ── REFRESH BUTTON ────────────────────────────────
+    st.markdown(
+        "<div style='height:0.5rem'></div>",
+        unsafe_allow_html=True
+    )
+
+    if st.button(
+        "Refresh messages",
+        use_container_width=True,
+        key="refresh_chat"
+    ):
         st.rerun()
 
     st.markdown(
-        "<div style='height:1.5rem'></div>",
+        "<div style='font-size:0.7rem;color:#3f3f46;"
+        "text-align:center;margin-top:0.3rem;'>"
+        "Click refresh to see new messages</div>",
         unsafe_allow_html=True
     )
 

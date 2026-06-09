@@ -504,3 +504,52 @@ def get_invitation_status(proposer_id, invitee_id):
     except Exception as e:
         print(f"Error checking invitation: {e}")
         return None
+
+def send_team_message(sender_id, sender_name,
+                      team_member_ids, message):
+    """Save a message to Supabase"""
+    try:
+        client = get_admin_client()
+
+        # Build list of all people who can see this
+        # message (sender + all team members)
+        all_ids = [str(sender_id)] + [
+            str(mid) for mid in team_member_ids
+        ]
+
+        client.table("team_messages").insert({
+            "sender_id": str(sender_id),
+            "sender_name": sender_name,
+            "recipient_ids": all_ids,
+            "message": message
+        }).execute()
+
+        return True
+
+    except Exception as e:
+        print(f"Error sending message: {e}")
+        return False
+
+
+def get_team_messages(user_id, limit=50):
+    """
+    Get all messages where this user is
+    sender or recipient.
+    """
+    try:
+        client = get_admin_client()
+        uid = str(user_id)
+
+        # Get messages where user is in recipient_ids
+        response = client.table("team_messages")\
+            .select("*")\
+            .contains("recipient_ids", [uid])\
+            .order("created_at", desc=False)\
+            .limit(limit)\
+            .execute()
+
+        return response.data or []
+
+    except Exception as e:
+        print(f"Error getting messages: {e}")
+        return []
