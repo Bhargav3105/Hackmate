@@ -3,9 +3,34 @@ def load_css():
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap');
 
-    #MainMenu, footer, header { visibility: hidden; }
-    [data-testid="collapsedControl"] { display: none; }
-    section[data-testid="stSidebar"] { display: none; }
+    #MainMenu, footer, header {
+        visibility: hidden !important;
+    }
+
+    /* ── HIDE SIDEBAR COMPLETELY ────────────── */
+    [data-testid="stSidebarNav"],
+    [data-testid="collapsedControl"],
+    section[data-testid="stSidebar"],
+    .st-emotion-cache-1oe5cao,
+    .st-emotion-cache-vk3wp9,
+    .st-emotion-cache-16txtl3,
+    .css-1d391kg,
+    .css-1rs6os,
+    .css-17lntkn,
+    .css-pkbazv {
+        display: none !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        height: 0 !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+
+    /* Push content to full width */
+    .main .block-container {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
 
     .stApp {
         background-color: #0c0c0e;

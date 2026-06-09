@@ -11,6 +11,15 @@ st.set_page_config(
     layout="wide"
 )
 
+# Nuclear sidebar hide
+st.markdown("""
+    <style>
+    div[data-testid="stSidebarNav"] {display:none!important;}
+    div[data-testid="collapsedControl"] {display:none!important;}
+    section[data-testid="stSidebar"] {display:none!important;}
+    </style>
+""", unsafe_allow_html=True)
+
 supabase = create_client(
     os.getenv("SUPABASE_URL"),
     os.getenv("SUPABASE_KEY")

@@ -11,6 +11,15 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Force hide sidebar
+st.markdown("""
+    <style>
+    [data-testid="stSidebarNav"] { display: none; }
+    [data-testid="collapsedControl"] { display: none; }
+    section[data-testid="stSidebar"] { display: none; }
+    </style>
+""", unsafe_allow_html=True)
+
 st.markdown(load_animations(), unsafe_allow_html=True)
 
 st.markdown(
