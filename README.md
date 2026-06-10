@@ -130,42 +130,50 @@ Language          Python 3.11
 ---
 
 ## How It Works
-╔═══════════════════════════════════════════════════════════════════╗
-║                         HACKMATE FLOW                             ║
-╠═══════════════════════════════════════════════════════════════════╣
-║                                                                   ║
-║   01  SIGN UP          Create your developer profile              ║
-║       └─────────────── Skills · Experience · Goals · Availability ║
-║             │                                                     ║
-║             ▼                                                     ║
-║   02  DASHBOARD        AI shows your top matches instantly        ║
-║       └─────────────── Compatibility scores · Match reasoning     ║
-║             │                                                     ║
-║             ▼                                                     ║
-║   03  FIND TEAMMATES   Browse real developer profiles             ║
-║       ├─────────────── Check AI compatibility score               ║
-║       └─────────────── Send invite to team                        ║
-║             │                                                     ║
-║             ▼                                                     ║
-║   04  INVITE FLOW      Three-step approval process                ║
-║       ├─────────────── Invitee accepts or declines                ║
-║       ├─────────────── Existing teammates vote to approve         ║
-║       └─────────────── All approve → person joins all teams       ║
-║             │                                                     ║
-║             ▼                                                     ║
-║   05  TEAM WORKSPACE   Collaborate and ship together              ║
-║       ├─────────────── Add tasks · Assign to members              ║
-║       ├─────────────── Move tasks: To Do → In Progress → Done     ║
-║       ├─────────────── Team chat visible to all members           ║
-║       └─────────────── AI role assignment for each member         ║
-║             │                                                     ║
-║             ▼                                                     ║
-║   06  GENERATE IDEAS   AI creates your buildathon strategy        ║
-║       ├─────────────── 3 unique project ideas for your stack      ║
-║       ├─────────────── Features · Tech stack · Timeline           ║
-║       └─────────────── 3-day MVP roadmap · Judge wow factor       ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
+
+```
+HACKMATE FLOW
+─────────────────────────────────────────────────
+
+  01  SIGN UP
+      Create your developer profile
+      Skills · Experience · Goals · Availability
+            |
+            v
+  02  DASHBOARD
+      AI shows your top matches instantly
+      Compatibility scores · Match reasoning
+            |
+            v
+  03  FIND TEAMMATES
+      Browse real developer profiles
+      Check AI compatibility score
+      Send invite to team
+            |
+            v
+  04  INVITE FLOW
+      Three-step approval process
+      → Invitee accepts or declines
+      → Existing teammates vote to approve
+      → All approve = person joins all teams
+            |
+            v
+  05  TEAM WORKSPACE
+      Collaborate and ship together
+      → Add tasks · Assign to members
+      → Move tasks: To Do → In Progress → Done
+      → Team chat visible to all members
+      → AI role assignment for each member
+            |
+            v
+  06  GENERATE IDEAS
+      AI creates your buildathon strategy
+      → 3 unique project ideas for your stack
+      → Features · Tech stack · Timeline
+      → 3-day MVP roadmap · Judge wow factor
+
+─────────────────────────────────────────────────
+```
 
 ---
 
