@@ -383,12 +383,10 @@ Real teams need consensus. The invite → accept → vote system ensures no one 
 - [x] Profile persistence across sessions
 - [x] Notifications badge for pending requests
 - [x] Search and filter teammates
-- [ ] Google OAuth login
+- [x] Mentor recommendations
+- [x] Export project plan as PDF
 - [ ] Mobile responsive design
 - [ ] Email notifications for requests
-- [ ] Team health score
-- [ ] Mentor recommendations
-- [ ] Export project plan as PDF
 
 ---
 
