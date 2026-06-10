@@ -488,7 +488,7 @@ MIT License — free to use, modify and distribute.
 
 <br>
 
-**HackMate** · Built for Sarvam AI Buildathon · 2025
+**HackMate** · Built for HackHazards Buildathon · 2025 · Sarvam AI Track
 
 *"The best hackathon teams don't happen by accident."*
 
