@@ -25,7 +25,7 @@ Find compatible teammates · Generate winning project ideas · Build together
 
 <br>
 
-[**View HackMate Live →**](https://your-app-url.streamlit.app)
+[**View HackMate Live →**](https://hackmate-v2.streamlit.app/)
 
 <br>
 
@@ -46,7 +46,7 @@ Most hackathon participants waste hours finding teammates, end up with mismatche
 
 ## Live Demo
 
-[**View HackMate Live →**](https://your-app-url.streamlit.app)
+[**View HackMate Live →**](https://hackmate-v2.streamlit.app/)
 
 > Replace the URL above with your actual Streamlit Cloud URL after deployment.
 
