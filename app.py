@@ -11,6 +11,11 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Show loading state while app initializes
+with st.spinner("Loading HackMate..."):
+    import time
+    time.sleep(0.1)
+    
 # Force hide sidebar
 st.markdown("""
     <style>

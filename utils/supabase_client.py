@@ -4,19 +4,28 @@ import os
 
 load_dotenv()
 
+# Cache the client so it's not recreated every page load
+_admin_client = None
+_anon_client = None
 
 def get_admin_client():
-    return create_client(
-        os.getenv("SUPABASE_URL"),
-        os.getenv("SUPABASE_SERVICE_KEY")
-    )
+    global _admin_client
+    if _admin_client is None:
+        _admin_client = create_client(
+            os.getenv("SUPABASE_URL"),
+            os.getenv("SUPABASE_SERVICE_KEY")
+        )
+    return _admin_client
 
 
 def get_client():
-    return create_client(
-        os.getenv("SUPABASE_URL"),
-        os.getenv("SUPABASE_KEY")
-    )
+    global _anon_client
+    if _anon_client is None:
+        _anon_client = create_client(
+            os.getenv("SUPABASE_URL"),
+            os.getenv("SUPABASE_KEY")
+        )
+    return _anon_client
 
 
 def parse_list_field(value):
@@ -77,7 +86,9 @@ def get_profile(user_id):
         print(f"Error getting profile: {e}")
         return None
 
+import streamlit as st
 
+@st.cache_data(ttl=60)
 def get_all_profiles(exclude_user_id=None):
     """Get all profiles except the current user"""
     try:
