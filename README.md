@@ -124,7 +124,6 @@ Streamlit lets the whole UI be built in pure Python, which keeps the entire stac
 HACKMATE FLOW
 
 ─────────────────────────────────────────────────
-
 01  SIGN UP
 
 Create your developer profile
@@ -132,6 +131,7 @@ Create your developer profile
 Skills · Experience · Goals · Availability
 
 |
+
 v
 
 02  DASHBOARD
@@ -143,6 +143,7 @@ Compatibility scores · Match reasoning
 Hackathon countdown timer
 
 |
+
 v
 
 03  FIND TEAMMATES
@@ -156,6 +157,7 @@ Check AI compatibility score
 Send invite to team
 
 |
+
 v
 
 04  INVITE FLOW
@@ -169,6 +171,7 @@ Three-step approval process
 → All approve = person joins every member's team
 
 |
+
 v
 
 05  TEAM WORKSPACE
@@ -186,6 +189,7 @@ Collaborate and ship together
 → AI role assignment for each member
 
 |
+
 v
 
 06  GENERATE IDEAS
@@ -295,6 +299,7 @@ team_activity (
     created_at timestamp
 )
 ```
+
 
 
 ## Getting Started Locally
