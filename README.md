@@ -25,7 +25,7 @@ Find compatible teammates · Generate winning project ideas · Build together
 
 <br>
 
-[**View HackMate Live →**](https://hackmate-v2.streamlit.app/)
+[**View HackMate Live →**](https://hackmate-v2.streamlit.app)
 
 <br>
 
@@ -37,24 +37,22 @@ Find compatible teammates · Generate winning project ideas · Build together
 
 HackMate is a full-stack AI-powered web application that solves one of the biggest problems at every hackathon — finding the right teammates.
 
-Instead of randomly teaming up or posting in Discord servers hoping someone responds, HackMate uses AI to intelligently match you with compatible developers based on your skills, experience level, goals and daily availability. It then helps your team generate winning project ideas, assign roles, track tasks and collaborate — all in one place.
+Instead of randomly teaming up or posting in Discord servers hoping someone responds, HackMate uses AI to intelligently match developers based on skills, experience level, goals and daily availability. It then helps the team generate winning project ideas, assign roles, track tasks and collaborate — all in one place.
 
 **The problem it solves:**
-Most hackathon participants waste hours finding teammates, end up with mismatched skill sets, and build projects without a clear plan. HackMate fixes all three problems with AI.
+Most hackathon participants waste hours finding teammates, end up with mismatched skill sets, and build projects without a clear plan. HackMate fixes all three with AI at the core of the product, not bolted on as an afterthought.
 
 ---
 
 ## Live Demo
 
-[**View HackMate Live →**](https://hackmate-v2.streamlit.app/)
-
-> Replace the URL above with your actual Streamlit Cloud URL after deployment.
+[**View HackMate Live →**](https://hackmate-v2.streamlit.app)
 
 ---
 
 ## Features
 
-### Core MVP Features
+### Core Features
 
 | Feature | Description |
 |---|---|
@@ -62,11 +60,13 @@ Most hackathon participants waste hours finding teammates, end up with mismatche
 | AI Team Matching | Compatibility scoring powered by Groq Llama 3.3 70B |
 | Compatibility Score | Percentage match with strengths, roles and challenges |
 | AI Project Idea Generator | 3 detailed ideas with features, stack and 3-day MVP plan |
-| Team Invite System | Send invites, invitee accepts/declines, team votes to approve |
+| PDF Export | Download any generated project plan as a polished PDF |
+| Team Invite System | Invite sent → invitee accepts/declines → existing team votes |
 | Connection Requests | Send and accept direct team requests with custom messages |
-| Team Workspace | Shared task board, team chat and progress tracking |
+| Team Workspace | Shared task board, team chat, activity feed and progress tracking |
 | Shared Tasks | All tasks visible to every team member in real time |
 | Shared Chat | Messages stored in database — visible to all team members |
+| Team Activity Feed | Live log of tasks added, completed and messages sent |
 | Dashboard | AI recommendations, countdown timer, team members, quick actions |
 | Notifications | Badge shows pending requests and votes |
 | Profile Edit | Update skills, goals and availability after setup |
@@ -79,101 +79,131 @@ Most hackathon participants waste hours finding teammates, end up with mismatche
 | AI Role Assignment | AI analyses team skills and assigns the best role for each member |
 | Hackathon Countdown | Set your deadline — live countdown on dashboard |
 | Team Voting System | Existing members vote to approve new team additions |
-| Profile Completion | Track how complete your profile is |
-| Shareable Profile | Share your HackMate profile link |
+| Session Persistence | Stays logged in across page refreshes |
 
 ### AI Features in Detail
 
 **Team Matching Engine**
-- Analyzes two developer profiles across 5 dimensions
-- Returns compatibility score from 0 to 100
-- Explains exactly why the match works
-- Suggests specific roles for each person
-- Flags potential collaboration challenges
+Analyzes two developer profiles across five dimensions and returns a compatibility score from 0 to 100, an explanation of why the match works, specific role suggestions for each person, and potential collaboration challenges to watch for.
 
 **Project Idea Generator**
-- Takes team skills, experience level and goals as input
-- Generates 3 unique buildathon ideas focused on Sarvam AI track
-- Each idea includes problem statement, solution, 4 key features, tech stack, 3-day MVP timeline and judge wow factor
-- Difficulty rating for each idea
+Takes team skills, experience level and goals as input and generates three unique buildathon ideas, each with a problem statement, solution, four key features, recommended tech stack, a three-day MVP timeline and a judge wow factor. Every idea can be exported as a clean PDF document.
 
 **AI Role Assignment**
-- Analyzes every team member's skills
-- Assigns the most suitable role for each person
-- Lists 3 key responsibilities per role
-- Explains why this role suits each person
-- Gives a one-line team strength summary
+Analyzes every team member's skills and assigns the most suitable role for each person, with three key responsibilities and an explanation of why that role fits, plus a one-line summary of the team's overall strength.
 
 **Profile Recommendations**
-- Analyzes your profile and recommends skills to look for in teammates
-- Suggests your ideal team size and role
-- Gives 3 personalized hackathon success tips
+Analyzes a user's profile and suggests what skills to look for in teammates, an ideal team size, a recommended role, and personalized hackathon success tips.
 
 ---
 
 ## Tech Stack
 Frontend          Streamlit (Python)
+
 Database          Supabase (PostgreSQL)
-Authentication    Supabase Auth (Email + Password)
+
+Authentication    Supabase Auth (Email + Password, session persistence)
+
 AI Engine         Groq API — Llama 3.3 70B Versatile
+
+PDF Generation     ReportLab
+
 Deployment        Streamlit Cloud
+
 Version Control   Git + GitHub
+
 Language          Python 3.11
 
 ### Why this stack?
 
-- **Streamlit** — Build a full UI in pure Python. Perfect for AI apps and rapid prototyping without React overhead.
-- **Supabase** — Postgres database with built-in auth, row level security and a generous free tier.
-- **Groq** — Fastest LLM inference available. Free tier. Llama 3.3 70B gives GPT-4 quality responses.
-- **Streamlit Cloud** — One-click deployment directly from GitHub. Free hosting for public repos.
+Streamlit lets the whole UI be built in pure Python, which keeps the entire stack in one language and made rapid iteration possible without a separate frontend build step. Supabase provides a Postgres database with built-in auth and row level security on a generous free tier. Groq was chosen over OpenAI because it is free, extremely fast, and Llama 3.3 70B produces output quality comparable to GPT-4 with no latency issues — ideal for a buildathon timeline. Streamlit Cloud gives one-click deployment directly from GitHub with free hosting for public repositories.
 
 ---
 
 ## How It Works
-
-```
 HACKMATE FLOW
-─────────────────────────────────────────────────
-
-  01  SIGN UP
-      Create your developer profile
-      Skills · Experience · Goals · Availability
-            |
-            v
-  02  DASHBOARD
-      AI shows your top matches instantly
-      Compatibility scores · Match reasoning
-            |
-            v
-  03  FIND TEAMMATES
-      Browse real developer profiles
-      Check AI compatibility score
-      Send invite to team
-            |
-            v
-  04  INVITE FLOW
-      Three-step approval process
-      → Invitee accepts or declines
-      → Existing teammates vote to approve
-      → All approve = person joins all teams
-            |
-            v
-  05  TEAM WORKSPACE
-      Collaborate and ship together
-      → Add tasks · Assign to members
-      → Move tasks: To Do → In Progress → Done
-      → Team chat visible to all members
-      → AI role assignment for each member
-            |
-            v
-  06  GENERATE IDEAS
-      AI creates your buildathon strategy
-      → 3 unique project ideas for your stack
-      → Features · Tech stack · Timeline
-      → 3-day MVP roadmap · Judge wow factor
 
 ─────────────────────────────────────────────────
-```
+01  SIGN UP
+
+Create your developer profile
+
+Skills · Experience · Goals · Availability
+
+|
+
+v
+
+02  DASHBOARD
+
+AI shows your top matches instantly
+
+Compatibility scores · Match reasoning
+
+Hackathon countdown timer
+
+|
+
+v
+
+03  FIND TEAMMATES
+
+Browse real developer profiles
+
+Search and filter by experience and availability
+
+Check AI compatibility score
+
+Send invite to team
+
+|
+
+v
+
+04  INVITE FLOW
+
+Three-step approval process
+
+→ Invitee accepts or declines
+
+→ Existing teammates vote to approve
+
+→ All approve = person joins every member's team
+
+|
+
+v
+
+05  TEAM WORKSPACE
+
+Collaborate and ship together
+
+→ Add tasks · Assign to members · Delete if needed
+
+→ Move tasks: To Do → In Progress → Done
+
+→ Team chat visible to all members
+
+→ Activity feed tracks every team action
+
+→ AI role assignment for each member
+
+|
+
+v
+
+06  GENERATE IDEAS
+
+AI creates your buildathon strategy
+
+→ 3 unique project ideas for your stack
+
+→ Features · Tech stack · Timeline
+
+→ 3-day MVP roadmap · Judge wow factor
+
+→ Export any idea as a PDF
+─────────────────────────────────────────────────
 
 ---
 
@@ -241,7 +271,7 @@ team_messages (
     id uuid PRIMARY KEY,
     sender_id uuid,
     sender_name text,
-    recipient_ids text[], -- all team member IDs
+    recipient_ids text[],
     message text,
     created_at timestamp
 )
@@ -257,7 +287,75 @@ team_tasks (
     status text,          -- todo / in_progress / done
     created_at timestamp
 )
+
+-- Team activity feed
+team_activity (
+    id uuid PRIMARY KEY,
+    actor_id uuid,
+    actor_name text,
+    action_type text,     -- task_added / task_done / message
+    action_text text,
+    team_member_ids text[],
+    created_at timestamp
+)
 ```
+
+---
+
+## Project Structure
+hackmate/
+
+│
+
+├── app.py                        # Landing page
+
+│
+
+├── pages/
+
+│   ├── 2_login.py                # Email authentication
+
+│   ├── 3_profile_setup.py        # First-time profile creation
+
+│   ├── 4_find_teammates.py       # Browse, filter, invite teammates
+
+│   ├── 5_match_results.py        # AI project idea generator + PDF export
+
+│   ├── 6_dashboard.py            # Matches, countdown, invites, votes
+
+│   ├── 7_team_workspace.py       # Tasks, chat, activity feed, AI roles
+
+│   └── 8_edit_profile.py         # Edit profile after setup
+
+│
+
+├── utils/
+
+│   ├── ai_helper.py               # All Groq AI calls
+
+│   ├── auth.py                    # Session management and persistence
+
+│   ├── styles.py                  # Global CSS design system
+
+│   ├── supabase_client.py         # All database operations
+
+│   └── pdf_export.py              # Project plan PDF generation
+
+│
+
+├── .streamlit/
+
+│   └── config.toml                # Theme, sidebar, performance config
+
+│
+
+├── .env                           # Secret keys — never committed
+
+├── .gitignore                     # Protects secrets and venv
+
+├── requirements.txt               # All Python dependencies
+
+└── README.md                      # This file
 
 ---
 
@@ -294,17 +392,19 @@ pip install -r requirements.txt
 ```
 
 ### Step 4 — Create your .env file
-
-Create a file called `.env` in the root folder:
 SUPABASE_URL=https://yourproject.supabase.co
+
 SUPABASE_KEY=your_supabase_anon_key
+
 SUPABASE_SERVICE_KEY=your_supabase_service_role_key
+
 GROQ_API_KEY=your_groq_api_key
+
 OPENAI_API_KEY=
 
-### Step 5 — Set up Supabase database
+### Step 5 — Set up the database
 
-Run the complete SQL from the Database Schema section above in your Supabase SQL Editor.
+Run the full SQL from the Database Schema section above in your Supabase SQL Editor, with row level security enabled and an open policy on each table for authenticated users.
 
 ### Step 6 — Run the app
 
@@ -318,58 +418,39 @@ Open `http://localhost:8501` in your browser.
 
 ## Deployment
 
-HackMate is deployed on Streamlit Cloud:
+HackMate runs on Streamlit Cloud:
 
-1. Push code to GitHub (public repo)
-2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Connect your GitHub repository
-4. Set main file as `app.py`
-5. Add secrets in Advanced Settings:
-
-```toml
-SUPABASE_URL = "https://yourproject.supabase.co"
-SUPABASE_KEY = "your_anon_key"
-SUPABASE_SERVICE_KEY = "your_service_role_key"
-GROQ_API_KEY = "your_groq_key"
-OPENAI_API_KEY = ""
-```
-
-6. Click Deploy
+1. Push code to a public GitHub repository
+2. Go to [share.streamlit.io](https://share.streamlit.io) and connect the repo
+3. Set the main file to `app.py`
+4. Add the four secrets shown in Step 4 above under Advanced Settings
+5. Deploy
 
 ---
 
 ## Security
 
-- All API keys stored in `.env` — never committed to Git
-- `.env` is listed in `.gitignore`
-- Supabase Row Level Security enabled on all tables
-- Service role key only used server-side
-- All user data protected by RLS policies
+All API keys are stored in `.env`, which is listed in `.gitignore` and never committed. Supabase Row Level Security is enabled on every table, and the service role key is only ever used server-side. During development a key was briefly exposed in an earlier commit; it was detected via GitGuardian, the affected keys were rotated immediately, a fresh Supabase project was created, and Git history was scrubbed — a real incident that shaped how secrets are handled in this project going forward.
 
 ---
 
 ## Key Design Decisions
 
-**Why session-based auth?**
-Streamlit reruns the entire script on every interaction. Storing the access token in `session_state` and restoring the profile from Supabase on each page load is the most reliable pattern for multi-page Streamlit apps.
+**Session-based authentication.** Streamlit reruns the entire script on every interaction, so the access token is stored in both `session_state` and the URL query params, and the profile is restored from Supabase on every page load. This is the most reliable pattern for keeping users logged in across a multi-page Streamlit app and page refreshes.
 
-**Why service role key for writes?**
-Row Level Security in Supabase requires the user's JWT token. Since Streamlit's Python backend doesn't maintain a persistent connection, using the service role key for server-side writes is safer and more reliable for this architecture.
+**Service role key for writes.** Row Level Security normally needs the user's JWT on every request, but Streamlit's backend doesn't keep a persistent authenticated connection. Using the service role key for server-side writes, combined with strict RLS policies, was the more reliable choice for this architecture.
 
-**Why Groq instead of OpenAI?**
-Groq is free, extremely fast and Llama 3.3 70B produces output quality comparable to GPT-4. Zero cost and no latency issues — perfect for a buildathon.
+**Groq over OpenAI.** Groq is free, very fast, and Llama 3.3 70B gives output quality close to GPT-4 — ideal for a project on a tight timeline with zero budget for API costs.
 
-**Why JSON responses from AI?**
-Structured JSON output makes it easy to display AI responses in a clean UI. The `clean_json()` helper strips markdown formatting that LLMs sometimes add, making parsing robust even with imperfect model output.
+**Three-step team invite flow.** Real teams need consensus, not unilateral additions. The invite → accept → vote system means no one joins a team without the invitee's agreement and the existing team's approval — closer to how real teams actually decide to add someone.
 
-**Three-step team invite flow:**
-Real teams need consensus. The invite → accept → vote system ensures no one gets added to a team without everyone's agreement — just like real startup teams work.
+**JSON-only AI responses.** Structured JSON output makes it possible to render AI responses as clean UI components rather than walls of text. A `clean_json()` helper strips markdown fences that LLMs sometimes add, so parsing stays robust even with imperfect model output.
 
 ---
 
 ## Roadmap
 
-- [x] Email authentication with Supabase
+- [x] Email authentication with session persistence
 - [x] Smart user profile setup and editing
 - [x] AI teammate matching with Groq
 - [x] Compatibility scoring with explanations
@@ -377,30 +458,34 @@ Real teams need consensus. The invite → accept → vote system ensures no one 
 - [x] Three-step team invite and voting system
 - [x] Team workspace with shared task board
 - [x] Real-time team chat stored in database
+- [x] Team activity feed
 - [x] AI project idea generator
+- [x] PDF export of project plans
 - [x] AI role assignment for team members
 - [x] Hackathon countdown timer
-- [x] Profile persistence across sessions
 - [x] Notifications badge for pending requests
 - [x] Search and filter teammates
-- [x] Mentor recommendations
-- [x] Export project plan as PDF
-- [ ] Mobile responsive design
+- [x] Deployed live on Streamlit Cloud
+- [ ] Demo video walkthrough
+- [ ] Mobile-responsive layout pass
+- [ ] Google OAuth login
 - [ ] Email notifications for requests
+- [ ] Team health score
 
 ---
 
 ## Development Journey
+Week 1   Environment setup, GitHub, Supabase, landing page, auth
 
-This project was built during the Sarvam AI Buildathon 2025. The development progressed through these phases:
+Week 2   Profile setup, dashboard, AI matching, compatibility scoring
 
-| Phase | What was built |
-|---|---|
-| Week 1 | Environment setup, GitHub, Supabase, landing page, auth |
-| Week 2 | Profile setup, dashboard, AI matching, compatibility scoring |
-| Week 3 | Project idea generator, team workspace, connection requests |
-| Week 4 | Team invite voting system, shared tasks, shared chat |
-| Week 5 | AI role assignment, countdown timer, UI polish, deployment |
+Week 3   Project idea generator, team workspace, connection requests
+
+Week 4   Team invite voting system, shared tasks, shared chat
+
+Week 5   AI role assignment, countdown timer, activity feed, PDF export
+
+Week 6   Security incident response, key rotation, deployment, polish
 
 ---
 
@@ -416,48 +501,27 @@ This project was designed, architected and built by a team of four developers.
 
 **Role:** Product Lead · Full Stack Engineer · AI Integration
 
-**Skills used in this project:**
-- Product architecture and feature prioritization
-- Streamlit frontend development and UI design system
-- Python backend logic and page routing
-- Supabase database schema design and RLS policies
-- Groq AI API integration and prompt engineering
-- Session management and authentication flow
-- Git workflow and deployment on Streamlit Cloud
+**Skills used in this project:** product architecture and feature prioritization, Streamlit frontend development and the UI design system, Python backend logic and page routing, Supabase schema design and RLS policies, Groq AI integration and prompt engineering, session management and authentication flow, Git workflow, security incident response, and deployment on Streamlit Cloud.
 
 ---
 
 ### Aishwary Raghuwansi — AI & Backend Engineer
 
-> Responsible for AI model integration, prompt design and backend data pipeline.
+> Responsible for AI model integration, prompt design and the backend data pipeline.
 
 **Role:** AI Engineer · Backend Developer
 
-**Skills used in this project:**
-- Groq API and LLM integration
-- Prompt engineering for structured JSON output
-- AI compatibility scoring algorithm design
-- Python backend utility functions
-- JSON parsing and error handling for AI responses
-- AI role assignment feature development
-- Testing and validating AI output quality
+**Skills used in this project:** Groq API and LLM integration, prompt engineering for structured JSON output, the AI compatibility scoring algorithm, AI role assignment logic, Python backend utility functions, JSON parsing and error handling for AI responses, and testing AI output quality and consistency.
 
 ---
 
 ### Rajat Kumar Singh — Database & Auth Engineer
 
-> Responsible for database architecture, authentication system and data security.
+> Responsible for database architecture, authentication and data security.
 
 **Role:** Database Engineer · Security & Auth Specialist
 
-**Skills used in this project:**
-- Supabase PostgreSQL schema design
-- Row Level Security policy configuration
-- User authentication flow with Supabase Auth
-- Team connection, voting and invitation table design
-- Data persistence and session management
-- Service role key management and secure writes
-- Security incident response and key rotation
+**Skills used in this project:** Supabase PostgreSQL schema design, Row Level Security policy configuration, the authentication flow with Supabase Auth, design of the team connection, voting and invitation tables, data persistence and session management, service role key handling, and the security incident response that led to rotating keys and migrating to a fresh Supabase project.
 
 ---
 
@@ -467,14 +531,7 @@ This project was designed, architected and built by a team of four developers.
 
 **Role:** UI/UX Designer · Frontend Developer
 
-**Skills used in this project:**
-- Premium dark UI design system
-- CSS animations and smooth scroll reveal effects
-- Component design — cards, badges, match cards, task board
-- Typography hierarchy with Playfair Display and Inter fonts
-- Sidebar suppression and navigation design
-- User flow design across all eight pages
-- Design consistency and visual polish inspired by premium startups
+**Skills used in this project:** the premium dark UI design system, CSS scroll-reveal animations and hover micro-interactions, component design for cards, badges and the task board, typography with Playfair Display and Inter, sidebar suppression and navigation design, user flow design across all eight pages, and overall design consistency.
 
 ---
 
@@ -488,9 +545,11 @@ MIT License — free to use, modify and distribute.
 
 <br>
 
-**HackMate** · Built for HackHazards Buildathon · 2025 · Sarvam AI Track
+**HackMate** · Built for Sarvam AI Buildathon · 2025
 
 *"The best hackathon teams don't happen by accident."*
+
+[**View HackMate Live →**](https://hackmate-v2.streamlit.app)
 
 <br>
 
