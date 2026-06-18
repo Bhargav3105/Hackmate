@@ -312,7 +312,7 @@ team_activity (
 ### Step 1 — Clone the repo
 
 ```bash
-git clone https://github.com/YOURUSERNAME/hackmate.git
+git clone https://github.com/Bhargav3105/Hackmate.git
 cd hackmate
 ```
 
