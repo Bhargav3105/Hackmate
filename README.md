@@ -124,6 +124,7 @@ Streamlit lets the whole UI be built in pure Python, which keeps the entire stac
 HACKMATE FLOW
 
 ─────────────────────────────────────────────────
+
 01  SIGN UP
 
 Create your developer profile
@@ -131,7 +132,6 @@ Create your developer profile
 Skills · Experience · Goals · Availability
 
 |
-
 v
 
 02  DASHBOARD
@@ -143,7 +143,6 @@ Compatibility scores · Match reasoning
 Hackathon countdown timer
 
 |
-
 v
 
 03  FIND TEAMMATES
@@ -157,7 +156,6 @@ Check AI compatibility score
 Send invite to team
 
 |
-
 v
 
 04  INVITE FLOW
@@ -171,7 +169,6 @@ Three-step approval process
 → All approve = person joins every member's team
 
 |
-
 v
 
 05  TEAM WORKSPACE
@@ -189,7 +186,6 @@ Collaborate and ship together
 → AI role assignment for each member
 
 |
-
 v
 
 06  GENERATE IDEAS
@@ -300,64 +296,6 @@ team_activity (
 )
 ```
 
----
-
-## Project Structure
-hackmate/
-
-│
-
-├── app.py                        # Landing page
-
-│
-
-├── pages/
-
-│   ├── 2_login.py                # Email authentication
-
-│   ├── 3_profile_setup.py        # First-time profile creation
-
-│   ├── 4_find_teammates.py       # Browse, filter, invite teammates
-
-│   ├── 5_match_results.py        # AI project idea generator + PDF export
-
-│   ├── 6_dashboard.py            # Matches, countdown, invites, votes
-
-│   ├── 7_team_workspace.py       # Tasks, chat, activity feed, AI roles
-
-│   └── 8_edit_profile.py         # Edit profile after setup
-
-│
-
-├── utils/
-
-│   ├── ai_helper.py               # All Groq AI calls
-
-│   ├── auth.py                    # Session management and persistence
-
-│   ├── styles.py                  # Global CSS design system
-
-│   ├── supabase_client.py         # All database operations
-
-│   └── pdf_export.py              # Project plan PDF generation
-
-│
-
-├── .streamlit/
-
-│   └── config.toml                # Theme, sidebar, performance config
-
-│
-
-├── .env                           # Secret keys — never committed
-
-├── .gitignore                     # Protects secrets and venv
-
-├── requirements.txt               # All Python dependencies
-
-└── README.md                      # This file
-
----
 
 ## Getting Started Locally
 
