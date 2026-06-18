@@ -409,9 +409,7 @@ All API keys are stored in `.env`, which is listed in `.gitignore` and never com
 - [x] Notifications badge for pending requests
 - [x] Search and filter teammates
 - [x] Deployed live on Streamlit Cloud
-- [ ] Demo video walkthrough
-- [ ] Mobile-responsive layout pass
-- [ ] Google OAuth login
+- [x] Demo video walkthrough
 - [ ] Email notifications for requests
 - [ ] Team health score
 
@@ -438,11 +436,11 @@ This project was designed, architected and built by a team of four developers.
 
 <br>
 
-### Bhargav Bathla — Project Lead & Full Stack Developer
+### Bhargav Bathla — Project Lead & Founding Engineer
 
 > Responsible for overall product vision, architecture decisions, full stack development and project delivery.
 
-**Role:** Product Lead · Full Stack Engineer · AI Integration
+**Role:** Product Lead · Founding Engineer · AI Integration
 
 **Skills used in this project:** product architecture and feature prioritization, Streamlit frontend development and the UI design system, Python backend logic and page routing, Supabase schema design and RLS policies, Groq AI integration and prompt engineering, session management and authentication flow, Git workflow, security incident response, and deployment on Streamlit Cloud.
 
