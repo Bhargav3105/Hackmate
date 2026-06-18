@@ -18,7 +18,9 @@ from utils.supabase_client import (
     add_team_task,
     get_team_tasks,
     update_task_status,
-    delete_team_task
+    delete_team_task,
+    log_activity,
+    get_team_activity
 )
 from utils.ai_helper import assign_team_roles
 load_dotenv()
@@ -439,6 +441,17 @@ with left:
                     assigned_to=assigned_to
                 )
                 if success:
+                    log_activity(
+                        actor_id=user.id,
+                        actor_name=name,
+                        action_type="task_added",
+                        action_text=(
+                            f"added task "
+                            f"\"{new_task.strip()}\" "
+                            f"assigned to {assigned_to}"
+                        ),
+                        team_member_ids=team_ids
+                    )
                     st.rerun()
                 else:
                     st.error("Could not add task.")
@@ -487,12 +500,19 @@ with left:
             )
         with tc2:
             if st.button(
-                "→",
-                key=f"todo_mv_{task_id}",
-                help="Move to In Progress"
+                "✓",
+                key=f"prog_mv_{task_id}",
+                help="Mark as Done"
             ):
-                update_task_status(
-                    task_id, "in_progress"
+                update_task_status(task_id, "done")
+                log_activity(
+                    actor_id=user.id,
+                    actor_name=name,
+                    action_type="task_done",
+                    action_text=(
+                        f"completed \"{task_text}\""
+                    ),
+                    team_member_ids=team_ids
                 )
                 st.rerun()
         with tc3:
@@ -683,6 +703,13 @@ with right:
             message=msg_input.strip()
         )
         if success:
+            log_activity(
+                actor_id=user.id,
+                actor_name=name,
+                action_type="message",
+                action_text="sent a message",
+                team_member_ids=team_ids
+            )
             st.rerun()
         else:
             st.error("Could not send message.")
@@ -711,6 +738,73 @@ with right:
         unsafe_allow_html=True
     )
 
+# ── ACTIVITY FEED ─────────────────────────────────
+    st.markdown(
+        "<div class='hm-label'>Recent Activity</div>",
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        "<div style='height:0.5rem'></div>",
+        unsafe_allow_html=True
+    )
+
+    activity = get_team_activity(user.id) if user else []
+
+    if not activity:
+        st.markdown(
+            "<div style='font-size:0.8rem;color:#27272a;"
+            "font-style:italic;padding:0.6rem 0;'>"
+            "No activity yet.</div>",
+            unsafe_allow_html=True
+        )
+    else:
+        icon_map = {
+            "task_added": "+",
+            "task_done": "✓",
+            "message": "·",
+        }
+        for act in activity[:8]:
+            icon = icon_map.get(
+                act.get("action_type"), "·"
+            )
+            actor = act.get("actor_name", "Someone")
+            text = act.get("action_text", "")
+
+            try:
+                raw_time = act["created_at"]
+                if "T" in raw_time:
+                    dt = datetime.fromisoformat(
+                        raw_time.replace("Z", "+00:00")
+                    )
+                    time_str = dt.strftime("%I:%M %p")
+                else:
+                    time_str = ""
+            except Exception:
+                time_str = ""
+
+            st.markdown(
+                f"<div style='display:flex;gap:8px;"
+                f"padding:6px 0;font-size:0.8rem;"
+                f"border-bottom:1px solid #1c1c1f;'>"
+                f"<span style='color:#3f3f46;"
+                f"min-width:14px;'>{icon}</span>"
+                f"<span style='color:#a1a1aa;"
+                f"font-weight:300;flex:1;'>"
+                f"<strong style='color:#71717a;"
+                f"font-weight:500;'>{actor}</strong> "
+                f"{text}</span>"
+                f"<span style='color:#27272a;"
+                f"font-size:0.7rem;'>"
+                f"{time_str}</span>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
+
+    st.markdown(
+        "<div style='height:1.5rem'></div>",
+        unsafe_allow_html=True
+    )
+    
     # ── TEAM STATS ────────────────────────────────────
     st.markdown(
         "<div class='hm-label'>Team Stats</div>",

@@ -7,6 +7,7 @@ from utils.ai_helper import generate_project_ideas
 from utils.auth import check_session
 from utils.supabase_client import parse_list_field
 from utils.styles import load_css
+from utils.pdf_export import generate_project_plan_pdf
 
 load_dotenv()
 
@@ -198,6 +199,28 @@ if generate:
                         f"font-style:italic;margin-bottom:1rem;'>"
                         f"{idea.get('tagline')}</div>"
                         f"</div>",
+                        unsafe_allow_html=True
+                    )
+                    # Download button for this idea
+                    pdf_bytes = generate_project_plan_pdf(
+                        idea,
+                        team_name=saved_profile.get(
+                            "full_name", "Your Team"
+                        )
+                    )
+                    st.download_button(
+                        label="Download as PDF",
+                        data=pdf_bytes,
+                        file_name=(
+                            f"{idea.get('title', 'project')}"
+                            f"_plan.pdf"
+                        ).replace(" ", "_"),
+                        mime="application/pdf",
+                        key=f"download_{i}"
+                    )
+
+                    st.markdown(
+                        "<div style='height:0.5rem'></div>",
                         unsafe_allow_html=True
                     )
 

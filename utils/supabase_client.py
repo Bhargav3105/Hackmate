@@ -650,3 +650,41 @@ def save_deadline(user_id, deadline_str):
     except Exception as e:
         print(f"Error saving deadline: {e}")
         return False
+    
+def log_activity(actor_id, actor_name,
+                 action_type, action_text,
+                 team_member_ids):
+    """Log a team activity event"""
+    try:
+        client = get_admin_client()
+        all_ids = [str(actor_id)] + [
+            str(mid) for mid in team_member_ids
+        ]
+        client.table("team_activity").insert({
+            "actor_id": str(actor_id),
+            "actor_name": actor_name,
+            "action_type": action_type,
+            "action_text": action_text,
+            "team_member_ids": all_ids
+        }).execute()
+        return True
+    except Exception as e:
+        print(f"Error logging activity: {e}")
+        return False
+
+
+def get_team_activity(user_id, limit=15):
+    """Get recent team activity"""
+    try:
+        client = get_admin_client()
+        uid = str(user_id)
+        response = client.table("team_activity")\
+            .select("*")\
+            .contains("team_member_ids", [uid])\
+            .order("created_at", desc=True)\
+            .limit(limit)\
+            .execute()
+        return response.data or []
+    except Exception as e:
+        print(f"Error getting activity: {e}")
+        return []
