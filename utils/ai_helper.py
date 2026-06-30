@@ -89,7 +89,7 @@ def calculate_compatibility(user_profile, candidate_profile):
                 "content": prompt
             }
         ],
-        temperature=0.7,
+        temperature=0.3,
         max_tokens=500
     )
 
@@ -157,7 +157,7 @@ def generate_project_ideas(skills, experience, goals, team_size=2):
                 "content": prompt
             }
         ],
-        temperature=0.7,
+        temperature=0.3,
         max_tokens=2000
     )
 
@@ -211,7 +211,7 @@ def get_ai_recommendations(user_profile):
                 "content": prompt
             }
         ],
-        temperature=0.7,
+        temperature=0.3,
         max_tokens=400
     )
 
@@ -279,7 +279,7 @@ def assign_team_roles(team_members, project_idea=""):
                 "content": prompt
             }
         ],
-        temperature=0.7,
+        temperature=0.3,
         max_tokens=1000
     )
 
