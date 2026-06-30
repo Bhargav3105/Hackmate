@@ -76,7 +76,7 @@ def calculate_compatibility(user_profile, candidate_profile):
     """
 
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-120b",
         messages=[
             {
                 "role": "system",
@@ -144,7 +144,7 @@ def generate_project_ideas(skills, experience, goals, team_size=2):
     """
 
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-120b",
         messages=[
             {
                 "role": "system",
@@ -198,7 +198,7 @@ def get_ai_recommendations(user_profile):
     """
 
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-120b",
         messages=[
             {
                 "role": "system",
@@ -266,7 +266,7 @@ def assign_team_roles(team_members, project_idea=""):
     """
 
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-120b",
         messages=[
             {
                 "role": "system",
